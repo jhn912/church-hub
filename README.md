@@ -2,16 +2,35 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.3
+## Current version: 0.4
 
-### New in v0.3
+### New in v0.4
+
+- Admin login page interface
+- Newsletter editor dashboard preview
+- English / Spanish newsletter editing
+- Live newsletter preview
+- Browser-only draft saving
+- Public developer note removed from announcements
+- Admin link added to the footer
+
+### Security status
+
+The admin page is currently an interface prototype.
+
+- Passwords are **not** stored or checked in JavaScript.
+- The sign-in form does **not** authenticate anyone yet.
+- Drafts are stored only in the current browser using `localStorage`.
+- The Publish button does **not** modify the live website yet.
+
+A secure authentication provider and backend must be connected before the admin system is used for real publishing.
+
+### Existing features
 
 - English / Spanish language toggle
-- Language choice is remembered in the visitor's browser
-- Dedicated newsletter page
-- Newsletter archive with individual issue links
-- Announcements powered by `announcements.json`
-- Newsletter content powered by `newsletters.json`
+- Dedicated newsletter page and archive
+- JSON-powered announcements
+- JSON-powered newsletter content
 
 ## Church information
 
@@ -29,6 +48,8 @@ Los Angeles, CA 90018
 - `script.js` — language toggle and dynamic content
 - `announcements.json` — editable announcements
 - `newsletters.json` — editable newsletter issues
+- `admin.html` — admin login and newsletter editor interface
+- `admin.js` — admin preview and local draft behavior
 
 ## Updating announcements
 

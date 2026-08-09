@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Ministerio Shekinah administration portal." />
+  <title>Admin | Ministerio Shekinah</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-body">
+  <main class="admin-main">
+    <div class="admin-shell">
+      <a href="index.html" class="admin-back-link">← Back to Ministerio Shekinah</a>
+
+      <section class="admin-login-view" id="adminLoginView">
+        <div class="admin-login-grid">
+          <div class="admin-intro">
+            <p class="eyebrow">Ministerio Shekinah</p>
+            <h1>Church Admin</h1>
+            <p>
+              A private workspace for preparing church newsletters and managing
+              website content.
+            </p>
+          </div>
+
+          <div class="admin-card">
+            <p class="card-label">Administrator access</p>
+            <h2>Sign in</h2>
+            <p class="admin-card-copy">
+              Secure authentication will be connected in the next development step.
+            </p>
+
+            <form class="admin-form" id="adminLoginForm">
+              <label>
+                Email
+                <input
+                  type="email"
+                  id="adminEmail"
+                  placeholder="admin@example.com"
+                  autocomplete="username"
+                  required
+                />
+              </label>
+
+              <label>
+                Password
+                <div class="password-wrap">
+                  <input
+                    type="password"
+                    id="adminPassword"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                    required
+                  />
+                  <button class="password-toggle" id="passwordToggle" type="button">Show</button>
+                </div>
+              </label>
+
+              <button class="button button-primary" type="submit">Sign In</button>
+            </form>
+
+            <p class="admin-message" id="adminMessage"></p>
+
+            <button class="admin-demo-button" id="previewDashboardButton" type="button">
+              Preview the admin dashboard
+            </button>
+
+            <div class="admin-security-note">
+              <span>🔒</span>
+              <span>
+                This version does not send or store the email or password.
+                We will connect real secure authentication before anyone uses this login.
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-dashboard" id="adminDashboard">
+        <div class="dashboard-header">
+          <div>
+            <p class="eyebrow">Admin preview</p>
+            <h1>Newsletter Editor</h1>
+            <p class="dashboard-subtitle">
+              Draft a bilingual newsletter and preview how it will look before publishing.
+            </p>
+          </div>
+
+          <div class="dashboard-actions">
+            <a href="newsletter.html" class="button admin-button-secondary">View Website</a>
+            <button class="button button-primary" id="saveDraftButton" type="button">Save Draft</button>
+          </div>
+        </div>
+
+        <div class="admin-editor-grid">
+          <section class="editor-panel">
+            <h2>Create Newsletter</h2>
+
+            <div class="editor-fields">
+              <div class="editor-row">
+                <div class="editor-field">
+                  <label>
+                    Issue date
+                    <input type="date" id="issueDate" />
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Status
+                    <select id="issueStatus">
+                      <option value="draft">Draft</option>
+                      <option value="ready">Ready to publish</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="editor-language-tabs">
+                <button class="editor-tab active" type="button" data-editor-lang="en">English</button>
+                <button class="editor-tab" type="button" data-editor-lang="es">Español</button>
+              </div>
+
+              <div class="editor-language-panel active" data-editor-panel="en">
+                <div class="editor-field">
+                  <label>
+                    Newsletter title
+                    <input id="titleEn" type="text" value="This Week at Ministerio Shekinah" />
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Sunday Gathering
+                    <textarea id="gatheringEn">Join us this Sunday at 3:00 PM for worship and fellowship.</textarea>
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Weekly Scripture
+                    <textarea id="scriptureEn" placeholder="Add this week's scripture passage..."></textarea>
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Community Update
+                    <textarea id="communityEn" placeholder="Add church announcements, reminders, or ministry updates..."></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="editor-language-panel" data-editor-panel="es">
+                <div class="editor-field">
+                  <label>
+                    Título del boletín
+                    <input id="titleEs" type="text" value="Esta Semana en Ministerio Shekinah" />
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Reunión del Domingo
+                    <textarea id="gatheringEs">Acompáñanos este domingo a las 3:00 PM para un tiempo de adoración y comunión.</textarea>
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Escritura de la Semana
+                    <textarea id="scriptureEs" placeholder="Agrega el pasaje bíblico de esta semana..."></textarea>
+                  </label>
+                </div>
+
+                <div class="editor-field">
+                  <label>
+                    Actualización de la Comunidad
+                    <textarea id="communityEs" placeholder="Agrega anuncios, recordatorios o actualizaciones de ministerios..."></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <p class="editor-helper">
+                For now, Save Draft stores the draft only in this browser on this device.
+                Publishing to the live site will be connected with the secure backend.
+              </p>
+            </div>
+
+            <div class="editor-toolbar">
+              <button class="button admin-button-secondary" id="clearDraftButton" type="button">Clear Draft</button>
+              <button class="button button-primary" id="publishButton" type="button">Publish Newsletter</button>
+            </div>
+
+            <p class="draft-status" id="draftStatus"></p>
+          </section>
+
+          <aside class="preview-panel">
+            <h2>Live Preview</h2>
+
+            <div class="preview-newsletter">
+              <div class="preview-newsletter-header">
+                <p>Ministerio Shekinah</p>
+                <h3 id="previewTitle">This Week at Ministerio Shekinah</h3>
+                <span class="preview-newsletter-date" id="previewDate">Draft issue</span>
+              </div>
+
+              <div class="preview-newsletter-body">
+                <section class="preview-section">
+                  <h4 id="previewGatheringHeading">Sunday Gathering</h4>
+                  <p id="previewGathering"></p>
+                </section>
+
+                <section class="preview-section">
+                  <h4 id="previewScriptureHeading">Weekly Scripture</h4>
+                  <p id="previewScripture">Your scripture will appear here.</p>
+                </section>
+
+                <section class="preview-section">
+                  <h4 id="previewCommunityHeading">Community Update</h4>
+                  <p id="previewCommunity">Your community update will appear here.</p>
+                </section>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

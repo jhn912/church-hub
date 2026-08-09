@@ -521,3 +521,386 @@ h1 {
     gap: 4px;
   }
 }
+
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-footer-link {
+  color: #cfd7c8;
+  font-size: 0.82rem;
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.admin-footer-link:hover {
+  opacity: 1;
+}
+
+.admin-body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(233, 237, 201, 0.7), transparent 34%),
+    #f7f5ef;
+}
+
+.admin-main {
+  padding: 72px 0 96px;
+}
+
+.admin-shell {
+  width: min(1040px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.admin-back-link {
+  display: inline-block;
+  margin-bottom: 28px;
+  color: #52606d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-login-grid {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 56px;
+  align-items: center;
+  min-height: 65vh;
+}
+
+.admin-intro h1 {
+  margin-bottom: 18px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.admin-intro p {
+  max-width: 560px;
+  color: #52606d;
+  font-size: 1.05rem;
+}
+
+.admin-card {
+  background: #fffdf8;
+  border: 1px solid rgba(31, 41, 51, 0.08);
+  border-radius: 28px;
+  padding: 30px;
+  box-shadow: 0 22px 55px rgba(38, 50, 56, 0.1);
+}
+
+.admin-card h2 {
+  margin-bottom: 8px;
+  font-family: "Playfair Display", serif;
+  font-size: 2rem;
+}
+
+.admin-card-copy {
+  margin-bottom: 24px;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-form label,
+.editor-field label {
+  display: grid;
+  gap: 7px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-form input,
+.editor-field input,
+.editor-field textarea,
+.editor-field select {
+  width: 100%;
+  border: 1px solid #cbd2d9;
+  border-radius: 14px;
+  padding: 13px 14px;
+  font: inherit;
+  background: white;
+}
+
+.admin-form input:focus,
+.editor-field input:focus,
+.editor-field textarea:focus,
+.editor-field select:focus {
+  outline: 2px solid #a3b18a;
+  border-color: transparent;
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 70px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #52606d;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-security-note {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f4f1e8;
+  color: #59636d;
+  font-size: 0.83rem;
+}
+
+.admin-message {
+  min-height: 24px;
+  margin: 14px 0 0;
+  color: #6b705c;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-demo-button {
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: #52606d;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-dashboard {
+  display: none;
+}
+
+.admin-dashboard.visible {
+  display: block;
+}
+
+.admin-login-view.hidden {
+  display: none;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 8px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2.7rem, 6vw, 4.5rem);
+  line-height: 1;
+}
+
+.dashboard-subtitle {
+  color: #52606d;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-button-secondary {
+  border: 1px solid #283618;
+  background: transparent;
+  color: #283618;
+}
+
+.admin-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.editor-panel,
+.preview-panel {
+  background: #fffdf8;
+  border: 1px solid rgba(31, 41, 51, 0.08);
+  border-radius: 24px;
+  padding: 26px;
+}
+
+.editor-panel h2,
+.preview-panel h2 {
+  font-family: "Playfair Display", serif;
+  margin-bottom: 22px;
+}
+
+.editor-fields {
+  display: grid;
+  gap: 18px;
+}
+
+.editor-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.editor-language-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.editor-tab {
+  border: 1px solid rgba(31, 41, 51, 0.14);
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: white;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editor-tab.active {
+  background: #283618;
+  color: white;
+  border-color: #283618;
+}
+
+.editor-language-panel {
+  display: none;
+}
+
+.editor-language-panel.active {
+  display: grid;
+  gap: 18px;
+}
+
+.editor-field textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.editor-helper {
+  margin: -6px 0 0;
+  color: #7b8490;
+  font-size: 0.8rem;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.preview-newsletter {
+  overflow: hidden;
+  border: 1px solid rgba(31, 41, 51, 0.08);
+  border-radius: 20px;
+  background: #f7f5ef;
+}
+
+.preview-newsletter-header {
+  padding: 26px;
+  background: #283618;
+  color: white;
+}
+
+.preview-newsletter-header p {
+  margin-bottom: 8px;
+  color: #dfe6d6;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.preview-newsletter-header h3 {
+  margin-bottom: 4px;
+  font-family: "Playfair Display", serif;
+  font-size: 1.8rem;
+}
+
+.preview-newsletter-date {
+  opacity: 0.8;
+  font-size: 0.88rem;
+}
+
+.preview-newsletter-body {
+  padding: 24px;
+}
+
+.preview-section {
+  padding: 17px 0;
+  border-top: 1px solid rgba(31, 41, 51, 0.09);
+}
+
+.preview-section:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.preview-section h4 {
+  margin-bottom: 6px;
+}
+
+.preview-section p {
+  margin-bottom: 0;
+  color: #59636d;
+  white-space: pre-line;
+}
+
+.draft-status {
+  margin-top: 16px;
+  color: #6b705c;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+@media (max-width: 850px) {
+  .admin-login-grid,
+  .admin-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-login-grid {
+    gap: 30px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-links {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
