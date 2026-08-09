@@ -1,0 +1,22 @@
+[
+  {
+    "id": "sunday-service",
+    "active": true,
+    "tag_en": "Sunday",
+    "tag_es": "Domingo",
+    "title_en": "Sunday Service",
+    "title_es": "Servicio Dominical",
+    "description_en": "Join us every Sunday at 3:00 PM at Ministerio Shekinah.",
+    "description_es": "Acompáñanos todos los domingos a las 3:00 PM en Ministerio Shekinah."
+  },
+  {
+    "id": "updates-coming-soon",
+    "active": true,
+    "tag_en": "Updates",
+    "tag_es": "Actualizaciones",
+    "title_en": "More Coming Soon",
+    "title_es": "Más Información Próximamente",
+    "description_en": "New church announcements and community information will be posted here.",
+    "description_es": "Aquí publicaremos nuevos anuncios de la iglesia e información para la comunidad."
+  }
+]
