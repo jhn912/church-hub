@@ -1,58 +1,45 @@
-# Church Hub Starter
+# Ministerio Shekinah Church Hub
 
-A beginner-friendly, mobile-first church website starter built with plain HTML, CSS, and JavaScript.
+A mobile-first church website for Ministerio Shekinah in Los Angeles.
 
-## Features
+## Current version: 0.2
 
-- Responsive navigation
-- Modern homepage
-- Service times
-- Upcoming events
-- Announcements
-- Ministries
-- Contact form demo
-- Mobile-friendly design
+### Features
 
-## Files
+- Responsive mobile-first layout
+- Sunday service information
+- Church address and directions
+- On-site church newsletter
+- Announcements section
+- Mobile navigation
+- GitHub Pages compatible
 
-- `index.html` — page structure and content
-- `style.css` — colors, spacing, layout, and responsive design
-- `script.js` — mobile menu, current year, and demo contact form
+## Church information
 
-## How to run it
+**Ministerio Shekinah**  
+2149 W Washington Blvd  
+Los Angeles, CA 90018
 
-You do not need to install anything.
+**Sunday service:** 3:00 PM
 
-1. Download the project.
-2. Open the folder.
-3. Double-click `index.html`.
-4. It should open in your browser.
+## Project goal
 
-## What to customize first
+This project is being developed as a real community resource for Ministerio Shekinah while also serving as a practical learning project in web development and AI-assisted software development.
 
-Search `index.html` and replace:
+## Technology
 
-- Church Hub
-- 123 Church Street
-- Service times
-- Events
-- Ministries
-- Contact email and phone
+- HTML
+- CSS
+- JavaScript
+- GitHub
+- GitHub Pages
 
-## Good next upgrades
+## Planned improvements
 
-- Add your church logo and photos
-- Add a real newsletter signup
-- Add an events page
-- Connect the contact form to a real service
-- Publish with GitHub Pages
-- Add an admin area later
-- Add AI-assisted newsletter generation later
-
-## Portfolio angle
-
-Document the project as:
-
-> I identified a real communication problem in my local church and built a mobile-first community hub to centralize service information, events, announcements, and ministry resources.
-
-Then keep improving it based on feedback from real users.
+- Real weekly newsletter issues
+- Newsletter archive
+- Church photos and branding
+- Events and announcements
+- Spanish-language support
+- Easier content editing
+- Potential AI-assisted newsletter workflow
