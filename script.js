@@ -184,6 +184,21 @@ async function loadServiceSettings() {
   renderServiceSettings(service);
 }
 
+function formatPublicServiceTime(timeValue) {
+  if (!timeValue) return "";
+
+  const normalized = String(timeValue).slice(0, 5);
+  const [hoursString, minutesString] = normalized.split(":");
+  const hours24 = Number(hoursString);
+  const minutes = Number(minutesString || "0");
+
+  if (Number.isNaN(hours24) || Number.isNaN(minutes)) return "";
+
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
 function renderServiceSettings(service) {
   const isSpanish = currentLanguage === "es";
   const serviceLabel =
@@ -195,7 +210,10 @@ function renderServiceSettings(service) {
   const specialMessage =
     service[isSpanish ? "special_message_es" : "special_message_en"];
 
-  const displayTime = service.time_display || "3:00 PM";
+  const displayTime =
+    formatPublicServiceTime(service.service_time) ||
+    service.time_display ||
+    "3:00 PM";
 
   const heroLabel = document.getElementById("heroServiceLabel");
   const heroTime = document.getElementById("heroServiceTime");

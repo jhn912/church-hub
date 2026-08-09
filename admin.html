@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=7.0" />
+  <link rel="stylesheet" href="style.css?v=7.1" />
 </head>
 <body class="admin-body">
   <main class="admin-main">
@@ -121,19 +121,14 @@
           <div class="admin-editor-grid">
             <div class="editor-panel">
               <div class="editor-fields">
-                <div class="editor-row">
-                  <div class="editor-field">
-                    <label>
-                      Service time
-                      <input type="time" id="serviceTimeInput" value="15:00" />
-                    </label>
-                  </div>
-                  <div class="editor-field">
-                    <label>
-                      Display time
-                      <input type="text" id="serviceTimeDisplayInput" value="3:00 PM" />
-                    </label>
-                  </div>
+                <div class="editor-field">
+                  <label>
+                    Service time
+                    <input type="time" id="serviceTimeInput" value="15:00" />
+                  </label>
+                  <p class="editor-helper">
+                    Enter the service time once. The website formats it automatically.
+                  </p>
                 </div>
 
                 <div class="editor-row">
@@ -435,7 +430,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=7.0"></script>
-  <script src="admin.js?v=7.0"></script>
+  <script src="supabase-config.js?v=7.1"></script>
+  <script src="admin.js?v=7.1"></script>
 </body>
 </html>

@@ -215,7 +215,6 @@ document.querySelectorAll(".admin-content-tab").forEach((tab) => {
 // ------------------------------------------------------------
 const serviceFieldIds = [
   "serviceTimeInput",
-  "serviceTimeDisplayInput",
   "serviceDayEn",
   "serviceDayEs",
   "serviceLabelEn",
@@ -231,10 +230,10 @@ serviceFieldIds.forEach((id) => {
 });
 
 function serviceFormData() {
+  const time = document.getElementById("serviceTimeInput").value;
   return {
-    time: document.getElementById("serviceTimeInput").value,
-    time_display:
-      document.getElementById("serviceTimeDisplayInput").value.trim(),
+    time,
+    time_display: formatServiceTime(time),
     day_en: document.getElementById("serviceDayEn").value.trim(),
     day_es: document.getElementById("serviceDayEs").value.trim(),
     service_label_en:
@@ -246,6 +245,22 @@ function serviceFormData() {
     special_message_es:
       document.getElementById("serviceMessageEs").value.trim()
   };
+}
+
+function formatServiceTime(timeValue) {
+  if (!timeValue) return "3:00 PM";
+
+  const [hoursString, minutesString] = timeValue.split(":");
+  const hours24 = Number(hoursString);
+  const minutes = Number(minutesString || "0");
+
+  if (Number.isNaN(hours24) || Number.isNaN(minutes)) {
+    return timeValue;
+  }
+
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
 }
 
 function updateServicePreview() {
@@ -280,8 +295,6 @@ async function loadServiceEditor() {
 
   document.getElementById("serviceTimeInput").value =
     String(data.service_time || "15:00").slice(0, 5);
-  document.getElementById("serviceTimeDisplayInput").value =
-    data.time_display || "3:00 PM";
   document.getElementById("serviceDayEn").value =
     data.day_en || "Sunday";
   document.getElementById("serviceDayEs").value =

@@ -2,7 +2,15 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.7
+## Current version: 0.7.1
+
+### v0.7.1 — Service time + cache fix
+
+- Removed the separate Display Time field.
+- Admins now enter the service time only once.
+- The site automatically converts values such as `15:01` to `3:01 PM`.
+- Public pages derive their displayed time from the canonical `service_time` database value.
+- Bumped all admin/public asset versions to force Safari and GitHub Pages to load the live-publishing code.
 
 ### New in v0.7 — Live publishing
 
