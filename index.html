@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A modern church community hub for services, events, announcements, and ministries." />
+  <title>Church Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#home">Church Hub</a>
+
+      <button class="menu-button" id="menuButton" aria-label="Open navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <nav class="nav" id="navMenu">
+        <a href="#home">Home</a>
+        <a href="#services">Services</a>
+        <a href="#events">Events</a>
+        <a href="#announcements">Announcements</a>
+        <a href="#ministries">Ministries</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Welcome home</p>
+          <h1>A place to worship, grow, and belong.</h1>
+          <p class="hero-copy">
+            Stay connected with our church community, upcoming events,
+            weekly announcements, ministries, and service information.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="#services">Plan a Visit</a>
+            <a class="button button-secondary" href="#events">See Events</a>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <p class="card-label">This Sunday</p>
+          <h2>Sunday Worship</h2>
+          <p>10:00 AM</p>
+          <p>123 Church Street<br>Los Angeles, CA</p>
+          <span class="status-pill">Everyone is welcome</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="services">
+      <div class="container">
+        <p class="eyebrow">Join us</p>
+        <h2 class="section-title">Service Times</h2>
+
+        <div class="cards three">
+          <article class="info-card">
+            <div class="icon">☀️</div>
+            <h3>Sunday Worship</h3>
+            <p>Every Sunday</p>
+            <strong>10:00 AM</strong>
+          </article>
+
+          <article class="info-card">
+            <div class="icon">📖</div>
+            <h3>Bible Study</h3>
+            <p>Every Wednesday</p>
+            <strong>7:00 PM</strong>
+          </article>
+
+          <article class="info-card">
+            <div class="icon">🫶</div>
+            <h3>Youth Night</h3>
+            <p>Every Friday</p>
+            <strong>7:00 PM</strong>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="events">
+      <div class="container">
+        <div class="section-heading-row">
+          <div>
+            <p class="eyebrow">What's happening</p>
+            <h2 class="section-title">Upcoming Events</h2>
+          </div>
+        </div>
+
+        <div class="event-list">
+          <article class="event-card">
+            <div class="event-date">
+              <span>AUG</span>
+              <strong>16</strong>
+            </div>
+            <div>
+              <h3>Community Food Drive</h3>
+              <p>Help us support local families with groceries and essential supplies.</p>
+              <small>Saturday · 9:00 AM</small>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-date">
+              <span>AUG</span>
+              <strong>23</strong>
+            </div>
+            <div>
+              <h3>Church Picnic</h3>
+              <p>Food, games, music, and fellowship for the whole community.</p>
+              <small>Sunday · 1:00 PM</small>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-date">
+              <span>SEP</span>
+              <strong>05</strong>
+            </div>
+            <div>
+              <h3>Volunteer Day</h3>
+              <p>Serve together through neighborhood cleanup and community outreach.</p>
+              <small>Saturday · 8:30 AM</small>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="announcements">
+      <div class="container">
+        <p class="eyebrow">Stay informed</p>
+        <h2 class="section-title">Announcements</h2>
+
+        <div class="cards two">
+          <article class="announcement-card">
+            <span class="tag">This Week</span>
+            <h3>Back-to-School Supply Drive</h3>
+            <p>
+              We are collecting backpacks, notebooks, pencils, and school supplies
+              for students in our community.
+            </p>
+          </article>
+
+          <article class="announcement-card">
+            <span class="tag">Volunteers</span>
+            <h3>Sunday Welcome Team</h3>
+            <p>
+              We are looking for volunteers to help greet visitors before Sunday service.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="ministries">
+      <div class="container">
+        <p class="eyebrow">Find your community</p>
+        <h2 class="section-title">Ministries</h2>
+
+        <div class="cards three">
+          <article class="info-card">
+            <div class="icon">👨‍👩‍👧‍👦</div>
+            <h3>Family Ministry</h3>
+            <p>Programs and gatherings designed to help families grow in faith together.</p>
+          </article>
+
+          <article class="info-card">
+            <div class="icon">🎵</div>
+            <h3>Worship Ministry</h3>
+            <p>Use your musical gifts to serve our church through worship and creativity.</p>
+          </article>
+
+          <article class="info-card">
+            <div class="icon">🤝</div>
+            <h3>Community Outreach</h3>
+            <p>Serve our neighbors through food drives, volunteering, and local partnerships.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact">
+      <div class="container contact-grid">
+        <div>
+          <p class="eyebrow">Come say hello</p>
+          <h2 class="section-title">Visit Us</h2>
+          <p>
+            123 Church Street<br>
+            Los Angeles, CA 90000
+          </p>
+          <p>
+            <strong>Email:</strong> hello@examplechurch.org<br>
+            <strong>Phone:</strong> (555) 123-4567
+          </p>
+        </div>
+
+        <form class="contact-card" id="contactForm">
+          <label>
+            Name
+            <input type="text" id="name" placeholder="Your name" required>
+          </label>
+
+          <label>
+            Email
+            <input type="email" id="email" placeholder="you@example.com" required>
+          </label>
+
+          <label>
+            Message
+            <textarea id="message" rows="4" placeholder="How can we help?" required></textarea>
+          </label>
+
+          <button class="button button-primary" type="submit">Send Message</button>
+          <p class="form-note" id="formNote"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-row">
+      <p>© <span id="year"></span> Church Hub</p>
+      <p>Built with care for our community.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
