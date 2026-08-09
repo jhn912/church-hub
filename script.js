@@ -1,3 +1,4 @@
+window.SHEKINAH_PUBLIC_READY = true;
 const translations = {
   "en": {
     "nav_home": "Home",
@@ -80,12 +81,10 @@ const translations = {
 };
 
 let currentLanguage = localStorage.getItem("ministerioLanguage") || "en";
-let publicSupabase = null;
 
-function supabaseConfigReady() {
+function publicConfigReady() {
   const cfg = window.SHEKINAH_SUPABASE;
   return Boolean(
-    window.supabase &&
     cfg?.url &&
     cfg?.publishableKey &&
     !cfg.url.includes("PASTE_") &&
@@ -93,11 +92,35 @@ function supabaseConfigReady() {
   );
 }
 
-if (supabaseConfigReady()) {
-  publicSupabase = window.supabase.createClient(
-    window.SHEKINAH_SUPABASE.url,
-    window.SHEKINAH_SUPABASE.publishableKey
-  );
+async function publicSupabaseRequest(path, query = "") {
+  if (!publicConfigReady()) {
+    throw new Error("Supabase public configuration is unavailable.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(
+      `${window.SHEKINAH_SUPABASE.url}/rest/v1/${path}${query}`,
+      {
+        headers: {
+          apikey: window.SHEKINAH_SUPABASE.publishableKey,
+          Accept: "application/json"
+        },
+        signal: controller.signal,
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Supabase request failed with ${response.status}.`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function applyLanguage(language) {
@@ -160,15 +183,16 @@ async function loadServiceSettings() {
 
   let service = null;
 
-  if (publicSupabase) {
-    const { data, error } = await publicSupabase
-      .from("service_settings")
-      .select("*")
-      .eq("id", 1)
-      .maybeSingle();
-
-    if (!error && data) service = data;
-    if (error) console.error("Supabase service read failed:", error);
+  if (publicConfigReady()) {
+    try {
+      const rows = await publicSupabaseRequest(
+        "service_settings",
+        "?select=*&id=eq.1&limit=1"
+      );
+      if (rows?.[0]) service = rows[0];
+    } catch (error) {
+      console.error("Supabase service read failed:", error);
+    }
   }
 
   if (!service) {
@@ -257,15 +281,15 @@ async function loadAnnouncements() {
   try {
     let announcements = null;
 
-    if (publicSupabase) {
-      const { data, error } = await publicSupabase
-        .from("announcements")
-        .select("*")
-        .eq("active", true)
-        .order("sort_order", { ascending: true });
-
-      if (!error) announcements = data;
-      if (error) console.error("Supabase announcements read failed:", error);
+    if (publicConfigReady()) {
+      try {
+        announcements = await publicSupabaseRequest(
+          "announcements",
+          "?select=*&active=eq.true&order=sort_order.asc"
+        );
+      } catch (error) {
+        console.error("Supabase announcements read failed:", error);
+      }
     }
 
     if (!announcements) {
@@ -320,17 +344,14 @@ async function loadNewsletters() {
   try {
     let issues = null;
 
-    if (publicSupabase) {
-      const { data, error } = await publicSupabase
-        .from("newsletters")
-        .select("*")
-        .eq("status", "published")
-        .not("published_at", "is", null)
-        .order("issue_date", { ascending: false });
-
-      if (!error) {
-        issues = (data || []).map(databaseNewsletterToDisplayIssue);
-      } else {
+    if (publicConfigReady()) {
+      try {
+        const rows = await publicSupabaseRequest(
+          "newsletters",
+          "?select=*&status=eq.published&published_at=not.is.null&order=issue_date.desc"
+        );
+        issues = (rows || []).map(databaseNewsletterToDisplayIssue);
+      } catch (error) {
         console.error("Supabase newsletter read failed:", error);
       }
     }

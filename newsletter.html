@@ -79,8 +79,17 @@
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=8.0"></script>
-  <script src="script.js?v=8.0"></script>
+  <script src="supabase-config.js?v=8.1"></script>
+  <script src="script.js?v=8.1"></script>
+  <script>
+    setTimeout(function () {
+      if (!window.SHEKINAH_PUBLIC_READY) {
+        var latest = document.getElementById("latestNewsletter");
+        var archive = document.getElementById("newsletterArchive");
+        if (latest) latest.innerHTML = "<p>Website content could not load. Please refresh the page.</p>";
+        if (archive) archive.innerHTML = "";
+      }
+    }, 2500);
+  </script>
 </body>
 </html>

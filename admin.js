@@ -1,0 +1,1132 @@
+window.SHEKINAH_ADMIN_READY = true;
+
+window.addEventListener("error", function (event) {
+  var message = document.getElementById("adminMessage");
+  if (message && !document.getElementById("adminLoginView").classList.contains("hidden")) {
+    message.textContent = "The admin portal hit a JavaScript error. Refresh the page or upload the latest admin.js file.";
+  }
+});
+
+const loginView = document.getElementById("adminLoginView");
+const dashboard = document.getElementById("adminDashboard");
+const loginForm = document.getElementById("adminLoginForm");
+const adminMessage = document.getElementById("adminMessage");
+const securityNote = document.getElementById("securityNote");
+const passwordToggle = document.getElementById("passwordToggle");
+const passwordInput = document.getElementById("adminPassword");
+const emailInput = document.getElementById("adminEmail");
+const signOutButton = document.getElementById("signOutButton");
+
+let supabaseClient = null;
+let authenticatedAdmin = null;
+let adminAnnouncements = [];
+let selectedAnnouncementIndex = null;
+
+function configIsReady() {
+  const cfg = window.SHEKINAH_SUPABASE;
+  return Boolean(
+    window.supabase &&
+    cfg &&
+    cfg.url &&
+    cfg.publishableKey &&
+    !cfg.url.includes("PASTE_") &&
+    !cfg.publishableKey.includes("PASTE_")
+  );
+}
+
+function showLogin() {
+  authenticatedAdmin = null;
+  loginView.classList.remove("hidden");
+  dashboard.classList.remove("visible");
+}
+
+async function showDashboard(user) {
+  authenticatedAdmin = user;
+  loginView.classList.add("hidden");
+  dashboard.classList.add("visible");
+
+  await Promise.all([
+    loadServiceEditor(),
+    loadAnnouncementEditor(),
+    loadNewsletterEditor()
+  ]);
+}
+
+function setLoginBusy(isBusy) {
+  const submitButton = loginForm.querySelector('button[type="submit"]');
+  submitButton.disabled = isBusy;
+  emailInput.disabled = isBusy;
+  passwordInput.disabled = isBusy;
+  submitButton.textContent = isBusy ? "Signing In…" : "Sign In";
+}
+
+function setButtonBusy(button, busy, busyText, normalText) {
+  button.disabled = busy;
+  button.textContent = busy ? busyText : normalText;
+}
+
+async function verifyAdmin(userId) {
+  const { data, error } = await supabaseClient
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Admin verification failed:", error);
+    return false;
+  }
+
+  return Boolean(data?.user_id);
+}
+
+async function restoreAuthenticatedAdmin() {
+  if (!supabaseClient) return;
+
+  const { data, error } = await supabaseClient.auth.getUser();
+
+  if (error || !data?.user) {
+    showLogin();
+    return;
+  }
+
+  const allowed = await verifyAdmin(data.user.id);
+
+  if (!allowed) {
+    await supabaseClient.auth.signOut();
+    showLogin();
+    adminMessage.textContent =
+      "This account is not authorized for church administration.";
+    return;
+  }
+
+  await showDashboard(data.user);
+}
+
+async function initializeAuth() {
+  if (!configIsReady()) {
+    loginForm.querySelector('button[type="submit"]').disabled = true;
+    emailInput.disabled = true;
+    passwordInput.disabled = true;
+
+    adminMessage.textContent =
+      "Secure login setup is not finished yet.";
+
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(
+    window.SHEKINAH_SUPABASE.url,
+    window.SHEKINAH_SUPABASE.publishableKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  await restoreAuthenticatedAdmin();
+
+  supabaseClient.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") showLogin();
+  });
+}
+
+passwordToggle.addEventListener("click", () => {
+  const showing = passwordInput.type === "text";
+  passwordInput.type = showing ? "password" : "text";
+  passwordToggle.textContent = showing ? "Show" : "Hide";
+});
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!supabaseClient) {
+    adminMessage.textContent = "Secure authentication is not available.";
+    return;
+  }
+
+  setLoginBusy(true);
+  adminMessage.textContent = "";
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: emailInput.value.trim(),
+      password: passwordInput.value
+    });
+
+    passwordInput.value = "";
+
+    if (error || !data?.user) {
+      adminMessage.textContent =
+        "Unable to sign in. Check the email and password.";
+      return;
+    }
+
+    const { data: verified, error: verifyError } =
+      await supabaseClient.auth.getUser();
+
+    if (verifyError || !verified?.user) {
+      await supabaseClient.auth.signOut();
+      adminMessage.textContent = "Unable to verify this session.";
+      return;
+    }
+
+    const allowed = await verifyAdmin(verified.user.id);
+
+    if (!allowed) {
+      await supabaseClient.auth.signOut();
+      adminMessage.textContent =
+        "This account is not authorized for church administration.";
+      return;
+    }
+
+    await showDashboard(verified.user);
+  } catch (error) {
+    console.error(error);
+    adminMessage.textContent =
+      "A secure sign-in error occurred. Please try again.";
+  } finally {
+    setLoginBusy(false);
+  }
+});
+
+signOutButton.addEventListener("click", async () => {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  showLogin();
+  adminMessage.textContent = "Signed out securely.";
+});
+
+// ------------------------------------------------------------
+// Admin section tabs
+// ------------------------------------------------------------
+document.querySelectorAll(".admin-content-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const section = tab.dataset.adminSection;
+
+    document.querySelectorAll(".admin-content-tab").forEach((item) => {
+      item.classList.toggle("active", item === tab);
+    });
+
+    document.querySelectorAll(".admin-content-section").forEach((panel) => {
+      panel.classList.toggle(
+        "active",
+        panel.dataset.adminPanel === section
+      );
+    });
+  });
+});
+
+// ------------------------------------------------------------
+// SERVICE — save directly to live service_settings row
+// ------------------------------------------------------------
+const serviceFieldIds = [
+  "serviceTimeInput",
+  "serviceDayEn",
+  "serviceDayEs",
+  "serviceLabelEn",
+  "serviceLabelEs",
+  "serviceMessageEn",
+  "serviceMessageEs"
+];
+
+serviceFieldIds.forEach((id) => {
+  const element = document.getElementById(id);
+  element.addEventListener("input", updateServicePreview);
+  element.addEventListener("change", updateServicePreview);
+});
+
+function serviceFormData() {
+  const time = document.getElementById("serviceTimeInput").value;
+  return {
+    time,
+    time_display: formatServiceTime(time),
+    day_en: document.getElementById("serviceDayEn").value.trim(),
+    day_es: document.getElementById("serviceDayEs").value.trim(),
+    service_label_en:
+      document.getElementById("serviceLabelEn").value.trim(),
+    service_label_es:
+      document.getElementById("serviceLabelEs").value.trim(),
+    special_message_en:
+      document.getElementById("serviceMessageEn").value.trim(),
+    special_message_es:
+      document.getElementById("serviceMessageEs").value.trim()
+  };
+}
+
+function formatServiceTime(timeValue) {
+  if (!timeValue) return "3:00 PM";
+
+  const [hoursString, minutesString] = timeValue.split(":");
+  const hours24 = Number(hoursString);
+  const minutes = Number(minutesString || "0");
+
+  if (Number.isNaN(hours24) || Number.isNaN(minutes)) {
+    return timeValue;
+  }
+
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
+function updateServicePreview() {
+  const data = serviceFormData();
+
+  document.getElementById("servicePreviewDay").textContent =
+    data.day_en || "Sunday";
+  document.getElementById("servicePreviewLabel").textContent =
+    data.service_label_en || "Sunday Service";
+  document.getElementById("servicePreviewTime").textContent =
+    data.time_display || "3:00 PM";
+  document.getElementById("servicePreviewMessage").textContent =
+    data.special_message_en ||
+    "We look forward to welcoming you.";
+}
+
+async function loadServiceEditor() {
+  const { data, error } = await supabaseClient
+    .from("service_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    document.getElementById("serviceDraftStatus").textContent =
+      "Could not load live service settings.";
+    return;
+  }
+
+  if (!data) return;
+
+  document.getElementById("serviceTimeInput").value =
+    String(data.service_time || "15:00").slice(0, 5);
+  document.getElementById("serviceDayEn").value =
+    data.day_en || "Sunday";
+  document.getElementById("serviceDayEs").value =
+    data.day_es || "Domingo";
+  document.getElementById("serviceLabelEn").value =
+    data.service_label_en || "Sunday Service";
+  document.getElementById("serviceLabelEs").value =
+    data.service_label_es || "Servicio Dominical";
+  document.getElementById("serviceMessageEn").value =
+    data.special_message_en || "";
+  document.getElementById("serviceMessageEs").value =
+    data.special_message_es || "";
+
+  updateServicePreview();
+}
+
+document.getElementById("saveServiceButton").addEventListener(
+  "click",
+  async () => {
+    if (!authenticatedAdmin) return;
+
+    const button = document.getElementById("saveServiceButton");
+    const status = document.getElementById("serviceDraftStatus");
+    const form = serviceFormData();
+
+    setButtonBusy(button, true, "Saving…", "Save Service");
+    status.textContent = "";
+
+    const { error } = await supabaseClient
+      .from("service_settings")
+      .update({
+        day_en: form.day_en,
+        day_es: form.day_es,
+        service_label_en: form.service_label_en,
+        service_label_es: form.service_label_es,
+        service_time: form.time,
+        time_display: form.time_display,
+        special_message_en: form.special_message_en,
+        special_message_es: form.special_message_es,
+        updated_at: new Date().toISOString(),
+        updated_by: authenticatedAdmin.id
+      })
+      .eq("id", 1);
+
+    setButtonBusy(button, false, "Saving…", "Save Service");
+
+    if (error) {
+      console.error(error);
+      status.textContent = `Could not publish service changes: ${error.message}`;
+      return;
+    }
+
+    status.textContent =
+      "Published. The live website now uses these service settings.";
+  }
+);
+
+// ------------------------------------------------------------
+// ANNOUNCEMENT MANAGEMENT
+// ------------------------------------------------------------
+let announcementFilter = "all";
+
+async function loadAnnouncementEditor() {
+  const { data, error } = await supabaseClient
+    .from("announcements")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    adminAnnouncements = [];
+    renderAdminAnnouncementList();
+    return;
+  }
+
+  adminAnnouncements = data || [];
+  renderAdminAnnouncementList();
+
+  if (
+    selectedAnnouncementIndex !== null &&
+    !adminAnnouncements[selectedAnnouncementIndex]
+  ) {
+    resetAnnouncementEditor();
+  }
+}
+
+document.getElementById("announcementFilter").addEventListener("change", (event) => {
+  announcementFilter = event.target.value;
+  renderAdminAnnouncementList();
+});
+
+function filteredAnnouncements() {
+  return adminAnnouncements.filter((item) => {
+    if (announcementFilter === "active") return item.active === true;
+    if (announcementFilter === "hidden") return item.active === false;
+    return true;
+  });
+}
+
+function renderAdminAnnouncementList() {
+  const list = document.getElementById("adminAnnouncementList");
+  const items = filteredAnnouncements();
+  const count = document.getElementById("announcementCount");
+
+  count.textContent = `${items.length} ${items.length === 1 ? "announcement" : "announcements"}`;
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-management-list">No announcements match this filter.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((item) => {
+    const actualIndex = adminAnnouncements.findIndex((candidate) => candidate.id === item.id);
+    const status = item.active ? "active" : "hidden";
+
+    return `
+      <button
+        class="management-list-item ${selectedAnnouncementIndex === actualIndex ? "selected" : ""}"
+        type="button"
+        data-announcement-index="${actualIndex}">
+        <div class="management-list-item-top">
+          <span class="status-pill" data-status="${status}">
+            ${item.active ? "Live" : "Hidden"}
+          </span>
+          <span class="tag">${escapeAdminHtml(item.tag_en || "Update")}</span>
+        </div>
+        <h3>${escapeAdminHtml(item.title_en || "Untitled announcement")}</h3>
+        <p>${escapeAdminHtml(item.description_en || "No description")}</p>
+      </button>
+    `;
+  }).join("");
+
+  list.querySelectorAll("[data-announcement-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectAnnouncement(Number(button.dataset.announcementIndex));
+    });
+  });
+}
+
+function selectAnnouncement(index) {
+  selectedAnnouncementIndex = index;
+  const item = adminAnnouncements[index];
+  if (!item) return;
+
+  document.getElementById("announcementEmptyState").style.display = "none";
+  document.getElementById("announcementEditorForm").classList.remove("hidden");
+
+  document.getElementById("announcementId").value = item.id || "";
+  document.getElementById("announcementIdLabel").textContent = item.isNew ? "Unsaved" : item.id;
+  document.getElementById("announcementTagEn").value = item.tag_en || "";
+  document.getElementById("announcementTagEs").value = item.tag_es || "";
+  document.getElementById("announcementTitleEn").value = item.title_en || "";
+  document.getElementById("announcementTitleEs").value = item.title_es || "";
+  document.getElementById("announcementDescriptionEn").value = item.description_en || "";
+  document.getElementById("announcementDescriptionEs").value = item.description_es || "";
+  document.getElementById("announcementEditorHeading").textContent =
+    item.isNew ? "New Announcement" : "Edit Announcement";
+
+  updateAnnouncementStatusUI(item);
+  document.getElementById("announcementDraftStatus").textContent = "";
+  renderAdminAnnouncementList();
+}
+
+function updateAnnouncementStatusUI(item) {
+  const badge = document.getElementById("announcementStatusBadge");
+  const toggleButton = document.getElementById("toggleAnnouncementVisibilityButton");
+
+  const status = item.active ? "active" : "hidden";
+  badge.dataset.status = status;
+  badge.textContent = item.active ? "Live" : "Hidden";
+  toggleButton.textContent = item.active ? "Hide Announcement" : "Publish Announcement";
+}
+
+document.getElementById("addAnnouncementButton").addEventListener("click", () => {
+  const newAnnouncement = {
+    id: `announcement-${Date.now()}`,
+    active: false,
+    tag_en: "Update",
+    tag_es: "Actualización",
+    title_en: "New Announcement",
+    title_es: "Nuevo Anuncio",
+    description_en: "",
+    description_es: "",
+    sort_order:
+      adminAnnouncements.length > 0
+        ? Math.max(...adminAnnouncements.map((item) => Number(item.sort_order) || 0)) + 10
+        : 10,
+    isNew: true
+  };
+
+  adminAnnouncements.unshift(newAnnouncement);
+  announcementFilter = "all";
+  document.getElementById("announcementFilter").value = "all";
+  selectAnnouncement(0);
+});
+
+document.querySelectorAll(".announcement-lang-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const lang = tab.dataset.announcementLang;
+
+    document.querySelectorAll(".announcement-lang-tab").forEach((item) => {
+      item.classList.toggle("active", item === tab);
+    });
+
+    document.querySelectorAll(".announcement-lang-panel").forEach((panel) => {
+      panel.classList.toggle(
+        "active",
+        panel.dataset.announcementPanel === lang
+      );
+    });
+  });
+});
+
+function announcementFormPayload(activeOverride = null) {
+  const existing = adminAnnouncements[selectedAnnouncementIndex];
+
+  return {
+    id:
+      document.getElementById("announcementId").value ||
+      `announcement-${Date.now()}`,
+    active:
+      activeOverride !== null
+        ? activeOverride
+        : Boolean(existing?.active),
+    tag_en: document.getElementById("announcementTagEn").value.trim(),
+    tag_es: document.getElementById("announcementTagEs").value.trim(),
+    title_en: document.getElementById("announcementTitleEn").value.trim(),
+    title_es: document.getElementById("announcementTitleEs").value.trim(),
+    description_en: document
+      .getElementById("announcementDescriptionEn")
+      .value.trim(),
+    description_es: document
+      .getElementById("announcementDescriptionEs")
+      .value.trim(),
+    sort_order: Number(existing?.sort_order) || 10,
+    updated_at: new Date().toISOString(),
+    updated_by: authenticatedAdmin.id,
+    ...(existing?.isNew ? { created_by: authenticatedAdmin.id } : {})
+  };
+}
+
+async function saveAnnouncement(activeOverride = null) {
+  if (!authenticatedAdmin || selectedAnnouncementIndex === null) return null;
+
+  const status = document.getElementById("announcementDraftStatus");
+  const payload = announcementFormPayload(activeOverride);
+
+  if (!payload.title_en || !payload.title_es) {
+    status.textContent = "Add both the English and Spanish titles before saving.";
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("announcements")
+    .upsert(payload, { onConflict: "id" })
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error);
+    status.textContent = `Could not save announcement: ${error.message}`;
+    return null;
+  }
+
+  adminAnnouncements[selectedAnnouncementIndex] = data;
+  selectAnnouncement(selectedAnnouncementIndex);
+  return data;
+}
+
+document.getElementById("saveAnnouncementButton").addEventListener("click", async () => {
+  const button = document.getElementById("saveAnnouncementButton");
+  setButtonBusy(button, true, "Saving…", "Save Changes");
+
+  const saved = await saveAnnouncement();
+
+  setButtonBusy(button, false, "Saving…", "Save Changes");
+
+  if (saved) {
+    document.getElementById("announcementDraftStatus").textContent =
+      saved.active
+        ? "Saved. Changes are live on the website."
+        : "Saved as hidden. Visitors cannot see this announcement.";
+  }
+});
+
+document
+  .getElementById("toggleAnnouncementVisibilityButton")
+  .addEventListener("click", async () => {
+    if (selectedAnnouncementIndex === null) return;
+
+    const item = adminAnnouncements[selectedAnnouncementIndex];
+    const button = document.getElementById("toggleAnnouncementVisibilityButton");
+    const nextActive = !item.active;
+
+    setButtonBusy(
+      button,
+      true,
+      nextActive ? "Publishing…" : "Hiding…",
+      nextActive ? "Publish Announcement" : "Hide Announcement"
+    );
+
+    const saved = await saveAnnouncement(nextActive);
+
+    setButtonBusy(
+      button,
+      false,
+      "",
+      saved?.active ? "Hide Announcement" : "Publish Announcement"
+    );
+
+    if (saved) {
+      announcementFilter = "all";
+      document.getElementById("announcementFilter").value = "all";
+      renderAdminAnnouncementList();
+      document.getElementById("announcementDraftStatus").textContent =
+        saved.active
+          ? "Published. This announcement is now live."
+          : "Hidden. This announcement is no longer public.";
+    }
+  });
+
+document.getElementById("deleteAnnouncementButton").addEventListener("click", async () => {
+  if (!authenticatedAdmin || selectedAnnouncementIndex === null) return;
+
+  const item = adminAnnouncements[selectedAnnouncementIndex];
+
+  if (item.isNew) {
+    adminAnnouncements.splice(selectedAnnouncementIndex, 1);
+    resetAnnouncementEditor();
+    renderAdminAnnouncementList();
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete "${item.title_en}" permanently?`
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("announcements")
+    .delete()
+    .eq("id", item.id);
+
+  if (error) {
+    document.getElementById("announcementDraftStatus").textContent =
+      `Could not delete announcement: ${error.message}`;
+    return;
+  }
+
+  adminAnnouncements.splice(selectedAnnouncementIndex, 1);
+  resetAnnouncementEditor();
+  renderAdminAnnouncementList();
+});
+
+function resetAnnouncementEditor() {
+  selectedAnnouncementIndex = null;
+  document.getElementById("announcementEditorForm").classList.add("hidden");
+  document.getElementById("announcementEmptyState").style.display = "grid";
+}
+
+// ------------------------------------------------------------
+// NEWSLETTER MANAGEMENT
+// ------------------------------------------------------------
+let adminNewsletters = [];
+let selectedNewsletterId = null;
+let selectedNewsletterIsNew = false;
+let newsletterFilter = "all";
+
+async function loadNewsletterEditor() {
+  const { data, error } = await supabaseClient
+    .from("newsletters")
+    .select("*")
+    .order("issue_date", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    adminNewsletters = [];
+    renderAdminNewsletterList();
+    return;
+  }
+
+  adminNewsletters = data || [];
+  renderAdminNewsletterList();
+
+  if (selectedNewsletterId) {
+    const stillExists = adminNewsletters.some((item) => item.id === selectedNewsletterId);
+    if (!stillExists) resetNewsletterEditor();
+  }
+}
+
+document.getElementById("newsletterFilter").addEventListener("change", (event) => {
+  newsletterFilter = event.target.value;
+  renderAdminNewsletterList();
+});
+
+function filteredNewsletters() {
+  if (newsletterFilter === "all") return adminNewsletters;
+  return adminNewsletters.filter((item) => item.status === newsletterFilter);
+}
+
+function renderAdminNewsletterList() {
+  const list = document.getElementById("adminNewsletterList");
+  const items = filteredNewsletters();
+  const count = document.getElementById("newsletterCount");
+
+  count.textContent = `${items.length} ${items.length === 1 ? "newsletter" : "newsletters"}`;
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-management-list">No newsletters match this filter.</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((item) => `
+    <button
+      class="management-list-item ${selectedNewsletterId === item.id ? "selected" : ""}"
+      type="button"
+      data-newsletter-id="${escapeAdminHtml(item.id)}">
+      <div class="management-list-item-top">
+        <span class="status-pill" data-status="${item.status}">
+          ${newsletterStatusLabel(item.status)}
+        </span>
+        <span class="management-list-date">${formatDate(item.issue_date, "en")}</span>
+      </div>
+      <h3>${escapeAdminHtml(item.title_en || "Untitled newsletter")}</h3>
+      <p>${item.status === "published" ? "Visible on the public newsletter page" : "Private in the admin portal"}</p>
+    </button>
+  `).join("");
+
+  list.querySelectorAll("[data-newsletter-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectNewsletter(button.dataset.newsletterId);
+    });
+  });
+}
+
+function newsletterStatusLabel(status) {
+  if (status === "published") return "Published";
+  if (status === "ready") return "Ready";
+  return "Draft";
+}
+
+function selectNewsletter(id) {
+  const item = adminNewsletters.find((newsletter) => newsletter.id === id);
+  if (!item) return;
+
+  selectedNewsletterId = item.id;
+  selectedNewsletterIsNew = false;
+
+  document.getElementById("newsletterEmptyState").style.display = "none";
+  document.getElementById("newsletterEditorForm").classList.remove("hidden");
+
+  document.getElementById("issueDate").value = item.issue_date;
+  document.getElementById("issueDate").readOnly = true;
+  document.getElementById("issueDateHelper").textContent =
+    "The issue date is locked after the first save.";
+  document.getElementById("issueStatus").value = item.status;
+  document.getElementById("titleEn").value = item.title_en || "";
+  document.getElementById("titleEs").value = item.title_es || "";
+  document.getElementById("gatheringEn").value = item.gathering_en || "";
+  document.getElementById("gatheringEs").value = item.gathering_es || "";
+  document.getElementById("scriptureEn").value = item.scripture_en || "";
+  document.getElementById("scriptureEs").value = item.scripture_es || "";
+  document.getElementById("communityEn").value = item.community_en || "";
+  document.getElementById("communityEs").value = item.community_es || "";
+
+  updateNewsletterStatusUI(item.status);
+  updateNewsletterPreview();
+  document.getElementById("draftStatus").textContent = "";
+  renderAdminNewsletterList();
+}
+
+document.getElementById("newNewsletterButton").addEventListener("click", () => {
+  selectedNewsletterId = null;
+  selectedNewsletterIsNew = true;
+
+  document.getElementById("newsletterEmptyState").style.display = "none";
+  document.getElementById("newsletterEditorForm").classList.remove("hidden");
+  document.getElementById("issueDate").readOnly = false;
+  document.getElementById("issueDate").value = "";
+  document.getElementById("issueDateHelper").textContent =
+    "Choose the issue date. It becomes the permanent ID after the first save.";
+  document.getElementById("issueStatus").value = "draft";
+  document.getElementById("titleEn").value = "This Week at Ministerio Shekinah";
+  document.getElementById("titleEs").value = "Esta Semana en Ministerio Shekinah";
+  document.getElementById("gatheringEn").value =
+    "Join us this Sunday at 3:00 PM for worship and fellowship.";
+  document.getElementById("gatheringEs").value =
+    "Acompáñanos este domingo a las 3:00 PM para un tiempo de adoración y comunión.";
+  document.getElementById("scriptureEn").value = "";
+  document.getElementById("scriptureEs").value = "";
+  document.getElementById("communityEn").value = "";
+  document.getElementById("communityEs").value = "";
+
+  updateNewsletterStatusUI("draft");
+  updateNewsletterPreview();
+  document.getElementById("draftStatus").textContent = "New unsaved draft.";
+  renderAdminNewsletterList();
+});
+
+document.querySelectorAll("[data-editor-lang]").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const lang = tab.dataset.editorLang;
+
+    document.querySelectorAll("[data-editor-lang]").forEach((item) => {
+      item.classList.toggle("active", item === tab);
+    });
+
+    document.querySelectorAll(".editor-language-panel").forEach((panel) => {
+      panel.classList.toggle(
+        "active",
+        panel.dataset.editorPanel === lang
+      );
+    });
+
+    updateNewsletterPreview();
+  });
+});
+
+[
+  "issueDate",
+  "titleEn",
+  "gatheringEn",
+  "scriptureEn",
+  "communityEn",
+  "titleEs",
+  "gatheringEs",
+  "scriptureEs",
+  "communityEs"
+].forEach((id) => {
+  document.getElementById(id).addEventListener("input", updateNewsletterPreview);
+  document.getElementById(id).addEventListener("change", updateNewsletterPreview);
+});
+
+function activeEditorLanguage() {
+  return (
+    document.querySelector("[data-editor-lang].active")
+      ?.dataset.editorLang || "en"
+  );
+}
+
+function newsletterFormData() {
+  return {
+    issue_date: document.getElementById("issueDate").value,
+    title_en: document.getElementById("titleEn").value.trim(),
+    title_es: document.getElementById("titleEs").value.trim(),
+    gathering_en: document.getElementById("gatheringEn").value.trim(),
+    gathering_es: document.getElementById("gatheringEs").value.trim(),
+    scripture_en: document.getElementById("scriptureEn").value.trim(),
+    scripture_es: document.getElementById("scriptureEs").value.trim(),
+    community_en: document.getElementById("communityEn").value.trim(),
+    community_es: document.getElementById("communityEs").value.trim()
+  };
+}
+
+function updateNewsletterStatusUI(status) {
+  document.getElementById("issueStatus").value = status;
+
+  const badge = document.getElementById("newsletterStatusBadge");
+  badge.dataset.status = status;
+  badge.textContent = newsletterStatusLabel(status);
+
+  const publishButton = document.getElementById("publishButton");
+  const unpublishButton = document.getElementById("unpublishNewsletterButton");
+  const saveButton = document.getElementById("saveNewsletterButton");
+
+  publishButton.textContent =
+    status === "published" ? "Update Published Newsletter" : "Publish Newsletter";
+  unpublishButton.style.display = status === "published" ? "" : "none";
+  saveButton.textContent =
+    status === "published" ? "Save Live Changes" : "Save Changes";
+}
+
+function updateNewsletterPreview() {
+  const lang = activeEditorLanguage();
+  const isSpanish = lang === "es";
+  const data = newsletterFormData();
+
+  document.getElementById("previewTitle").textContent =
+    (isSpanish ? data.title_es : data.title_en) ||
+    (isSpanish ? "Boletín de Ministerio Shekinah" : "Ministerio Shekinah Newsletter");
+
+  document.getElementById("previewGatheringHeading").textContent =
+    isSpanish ? "Reunión del Domingo" : "Sunday Gathering";
+  document.getElementById("previewScriptureHeading").textContent =
+    isSpanish ? "Escritura de la Semana" : "Weekly Scripture";
+  document.getElementById("previewCommunityHeading").textContent =
+    isSpanish ? "Actualización de la Comunidad" : "Community Update";
+
+  document.getElementById("previewGathering").textContent =
+    (isSpanish ? data.gathering_es : data.gathering_en) ||
+    (isSpanish ? "El contenido aparecerá aquí." : "Your content will appear here.");
+  document.getElementById("previewScripture").textContent =
+    (isSpanish ? data.scripture_es : data.scripture_en) ||
+    (isSpanish ? "La escritura aparecerá aquí." : "Your scripture will appear here.");
+  document.getElementById("previewCommunity").textContent =
+    (isSpanish ? data.community_es : data.community_en) ||
+    (isSpanish ? "La actualización aparecerá aquí." : "Your community update will appear here.");
+
+  document.getElementById("previewDate").textContent =
+    data.issue_date
+      ? formatDate(data.issue_date, lang)
+      : isSpanish
+      ? "Boletín en borrador"
+      : "Draft issue";
+}
+
+function formatDate(dateString, language) {
+  if (!dateString) return "No date";
+
+  const date = new Date(`${dateString}T12:00:00`);
+  return new Intl.DateTimeFormat(
+    language === "es" ? "es-US" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    }
+  ).format(date);
+}
+
+function validateNewsletterForm() {
+  const data = newsletterFormData();
+  const status = document.getElementById("draftStatus");
+
+  if (!data.issue_date) {
+    status.textContent = "Choose an issue date first.";
+    return null;
+  }
+
+  if (!data.title_en || !data.title_es) {
+    status.textContent = "Add both the English and Spanish newsletter titles.";
+    return null;
+  }
+
+  return data;
+}
+
+async function persistNewsletter(targetStatus = null) {
+  if (!authenticatedAdmin) return null;
+
+  const data = validateNewsletterForm();
+  if (!data) return null;
+
+  const currentStatus = document.getElementById("issueStatus").value || "draft";
+  const status = targetStatus || currentStatus;
+  const id = selectedNewsletterId || data.issue_date;
+
+  if (selectedNewsletterIsNew) {
+    const dateConflict = adminNewsletters.some((item) => item.issue_date === data.issue_date);
+    if (dateConflict) {
+      document.getElementById("draftStatus").textContent =
+        "A newsletter already exists for that issue date.";
+      return null;
+    }
+  }
+
+  const existing = adminNewsletters.find((item) => item.id === selectedNewsletterId);
+
+  const payload = {
+    id,
+    issue_date: data.issue_date,
+    status,
+    title_en: data.title_en,
+    title_es: data.title_es,
+    gathering_en: data.gathering_en,
+    gathering_es: data.gathering_es,
+    scripture_en: data.scripture_en,
+    scripture_es: data.scripture_es,
+    community_en: data.community_en,
+    community_es: data.community_es,
+    updated_at: new Date().toISOString(),
+    updated_by: authenticatedAdmin.id,
+    created_by: existing?.created_by || authenticatedAdmin.id,
+    published_at:
+      status === "published"
+        ? existing?.published_at || new Date().toISOString()
+        : null
+  };
+
+  const { data: saved, error } = await supabaseClient
+    .from("newsletters")
+    .upsert(payload, { onConflict: "id" })
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error);
+    document.getElementById("draftStatus").textContent =
+      `Could not save newsletter: ${error.message}`;
+    return null;
+  }
+
+  selectedNewsletterId = saved.id;
+  selectedNewsletterIsNew = false;
+  await loadNewsletterEditor();
+  selectNewsletter(saved.id);
+  return saved;
+}
+
+document.getElementById("saveNewsletterButton").addEventListener("click", async () => {
+  const button = document.getElementById("saveNewsletterButton");
+  const status = document.getElementById("issueStatus").value;
+
+  setButtonBusy(
+    button,
+    true,
+    "Saving…",
+    status === "published" ? "Save Live Changes" : "Save Changes"
+  );
+
+  const saved = await persistNewsletter();
+
+  setButtonBusy(
+    button,
+    false,
+    "Saving…",
+    saved?.status === "published" ? "Save Live Changes" : "Save Changes"
+  );
+
+  if (saved) {
+    document.getElementById("draftStatus").textContent =
+      saved.status === "published"
+        ? "Saved. Your changes are live."
+        : "Saved privately in Supabase.";
+  }
+});
+
+document.getElementById("publishButton").addEventListener("click", async () => {
+  const confirmed = window.confirm(
+    "Publish this newsletter to the public website?"
+  );
+
+  if (!confirmed) return;
+
+  const button = document.getElementById("publishButton");
+  setButtonBusy(button, true, "Publishing…", "Publish Newsletter");
+
+  const saved = await persistNewsletter("published");
+
+  setButtonBusy(
+    button,
+    false,
+    "Publishing…",
+    saved?.status === "published" ? "Update Published Newsletter" : "Publish Newsletter"
+  );
+
+  if (saved) {
+    document.getElementById("draftStatus").textContent =
+      "Published. This newsletter is now public.";
+  }
+});
+
+document
+  .getElementById("unpublishNewsletterButton")
+  .addEventListener("click", async () => {
+    if (!selectedNewsletterId) return;
+
+    const confirmed = window.confirm(
+      "Unpublish this newsletter? It will disappear from the public website but remain saved in the admin portal."
+    );
+
+    if (!confirmed) return;
+
+    const button = document.getElementById("unpublishNewsletterButton");
+    setButtonBusy(button, true, "Unpublishing…", "Unpublish");
+
+    const saved = await persistNewsletter("ready");
+
+    setButtonBusy(button, false, "Unpublishing…", "Unpublish");
+
+    if (saved) {
+      document.getElementById("draftStatus").textContent =
+        "Unpublished. The issue is now private and marked Ready.";
+    }
+  });
+
+document.getElementById("deleteNewsletterButton").addEventListener("click", async () => {
+  if (selectedNewsletterIsNew) {
+    resetNewsletterEditor();
+    return;
+  }
+
+  if (!selectedNewsletterId) return;
+
+  const item = adminNewsletters.find((newsletter) => newsletter.id === selectedNewsletterId);
+  const confirmed = window.confirm(
+    `Delete "${item?.title_en || "this newsletter"}" permanently?`
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("newsletters")
+    .delete()
+    .eq("id", selectedNewsletterId);
+
+  if (error) {
+    document.getElementById("draftStatus").textContent =
+      `Could not delete newsletter: ${error.message}`;
+    return;
+  }
+
+  resetNewsletterEditor();
+  await loadNewsletterEditor();
+});
+
+function resetNewsletterEditor() {
+  selectedNewsletterId = null;
+  selectedNewsletterIsNew = false;
+  document.getElementById("newsletterEditorForm").classList.add("hidden");
+  document.getElementById("newsletterEmptyState").style.display = "grid";
+  renderAdminNewsletterList();
+}
+
+function escapeAdminHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+initializeAuth();

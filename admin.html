@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=8.0" />
+  <link rel="stylesheet" href="style.css?v=8.1" />
 </head>
 <body class="admin-body">
   <main class="admin-main">
@@ -479,8 +479,18 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=8.0"></script>
-  <script src="admin.js?v=8.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js?v=8.1"></script>
+  <script src="admin.js?v=8.1"></script>
+  <script>
+    setTimeout(function () {
+      if (!window.SHEKINAH_ADMIN_READY) {
+        var message = document.getElementById("adminMessage");
+        if (message) {
+          message.textContent = "Admin code failed to load. The admin.js file may be missing or empty.";
+        }
+      }
+    }, 2000);
+  </script>
 </body>
 </html>
