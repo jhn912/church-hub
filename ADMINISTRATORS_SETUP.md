@@ -9,13 +9,34 @@ The browser never receives a Supabase secret key. Inviting, removing, and changi
 
 ## Production setup
 
-1. Apply `supabase/migrations/202608090002_admin_roles.sql` in the Supabase SQL Editor.
+Apply the committed migrations in order. Do not skip directly to the role migration on a new or unknown database.
+
+1. Apply `supabase/migrations/202608090001_complete_production_schema.sql`.
+   - This is the canonical baseline for `admin_users`, `service_settings`, `announcements`, and `newsletters`.
+   - It preserves existing rows and creates the compatibility helpers expected by later hardening migrations.
+2. Apply `supabase/migrations/202608090002_admin_roles.sql`.
    - It adds the `role` column to `public.admin_users`.
    - If exactly one administrator already exists, that existing account becomes the initial `owner`.
    - It does not create or delete Auth users.
-2. Deploy `supabase/functions/admin-users/index.ts` as the Edge Function named `admin-users` with JWT verification enabled (the default).
-3. Sign out of the website admin portal, sign back in, and refresh the page.
-4. The **Administrators** tab appears only when the signed-in allow-listed account has `role = 'owner'`.
+3. Apply `supabase/migrations/202608090003_security_hardening.sql`.
+   - It installs the canonical browser grants and Row Level Security policies.
+   - Public visitors can read only the singleton service row, active announcements, and published newsletters.
+   - Authenticated content writes require membership in `admin_users`.
+4. Apply `supabase/migrations/202608090004_service_role_least_privilege.sql`.
+   - It limits `service_role` table access to the `admin_users` operations used by the protected Edge Function.
+5. Deploy `supabase/functions/admin-users/index.ts` as the Edge Function named `admin-users`.
+6. Sign out of the website admin portal, sign back in, and refresh the page.
+7. The **Administrators** tab appears only when the signed-in allow-listed account has `role = 'owner'`.
+
+### Required post-migration verification
+
+Before adding another administrator, confirm in Supabase that:
+
+- RLS is enabled on all four application tables.
+- `anon` cannot read `admin_users`, hidden announcements, or unpublished newsletters.
+- an authenticated account that is not in `admin_users` cannot create, update, or delete CMS content.
+- an allow-listed administrator can still manage announcements, newsletters, and the singleton service row.
+- at least one `owner` exists in `admin_users`.
 
 ## Security model
 
