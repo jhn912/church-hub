@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=4.1" />
+  <link rel="stylesheet" href="style.css?v=5.0" />
 </head>
 <body class="admin-body">
   <main class="admin-main">
@@ -33,7 +33,7 @@
             <p class="card-label">Administrator access</p>
             <h2>Sign in</h2>
             <p class="admin-card-copy">
-              Secure authentication will be connected in the next development step.
+              Sign in with an authorized Ministerio Shekinah administrator account.
             </p>
 
             <form class="admin-form" id="adminLoginForm">
@@ -66,12 +66,7 @@
             </form>
 
             <p class="admin-message" id="adminMessage"></p>
-
-            <button class="admin-demo-button" id="previewDashboardButton" type="button">
-              Preview the admin dashboard
-            </button>
-
-            <div class="admin-security-note">
+<div class="admin-security-note">
               <span>🔒</span>
               <span>
                 This version does not send or store the email or password.
@@ -85,15 +80,16 @@
       <section class="admin-dashboard" id="adminDashboard">
         <div class="dashboard-header">
           <div>
-            <p class="eyebrow">Admin preview</p>
+            <p class="eyebrow">Administrator</p>
             <h1>Newsletter Editor</h1>
             <p class="dashboard-subtitle">
-              Draft a bilingual newsletter and preview how it will look before publishing.
+              Create a bilingual newsletter and preview how it will look before publishing.
             </p>
           </div>
 
           <div class="dashboard-actions">
             <a href="newsletter.html" class="button admin-button-secondary">View Website</a>
+            <button class="button admin-button-secondary" id="signOutButton" type="button">Sign Out</button>
             <button class="button button-primary" id="saveDraftButton" type="button">Save Draft</button>
           </div>
         </div>
@@ -234,6 +230,8 @@
     </div>
   </main>
 
-  <script src="admin.js?v=4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=5.0"></script>
+  <script src="admin.js?v=5.0"></script>
 </body>
 </html>

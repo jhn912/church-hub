@@ -904,3 +904,24 @@ h1 {
     gap: 4px;
   }
 }
+
+
+.admin-form button:disabled,
+.admin-form input:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.dashboard-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 620px) {
+  .dashboard-actions {
+    width: 100%;
+  }
+
+  .dashboard-actions .button {
+    flex: 1 1 auto;
+  }
+}

@@ -2,11 +2,124 @@ const loginView = document.getElementById("adminLoginView");
 const dashboard = document.getElementById("adminDashboard");
 const loginForm = document.getElementById("adminLoginForm");
 const adminMessage = document.getElementById("adminMessage");
-const previewDashboardButton = document.getElementById("previewDashboardButton");
+const securityNote = document.getElementById("securityNote");
 const passwordToggle = document.getElementById("passwordToggle");
 const passwordInput = document.getElementById("adminPassword");
-
+const emailInput = document.getElementById("adminEmail");
+const signOutButton = document.getElementById("signOutButton");
 const DRAFT_KEY = "ministerioShekinahNewsletterDraft";
+
+let supabaseClient = null;
+let authenticatedAdmin = null;
+
+function configIsReady() {
+  const cfg = window.SHEKINAH_SUPABASE;
+  return Boolean(
+    cfg &&
+    cfg.url &&
+    cfg.publishableKey &&
+    !cfg.url.includes("PASTE_") &&
+    !cfg.publishableKey.includes("PASTE_")
+  );
+}
+
+function showLogin() {
+  authenticatedAdmin = null;
+  loginView.classList.remove("hidden");
+  dashboard.classList.remove("visible");
+}
+
+function showDashboard(user) {
+  authenticatedAdmin = user;
+  loginView.classList.add("hidden");
+  dashboard.classList.add("visible");
+  loadDraft();
+  updatePreview();
+}
+
+function setLoginBusy(isBusy) {
+  const submitButton = loginForm.querySelector('button[type="submit"]');
+  submitButton.disabled = isBusy;
+  emailInput.disabled = isBusy;
+  passwordInput.disabled = isBusy;
+  submitButton.textContent = isBusy ? "Signing In…" : "Sign In";
+}
+
+async function verifyAdmin(userId) {
+  const { data, error } = await supabaseClient
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Admin verification failed:", error);
+    return false;
+  }
+
+  return Boolean(data?.user_id);
+}
+
+async function restoreAuthenticatedAdmin() {
+  if (!supabaseClient) return;
+
+  const { data, error } = await supabaseClient.auth.getUser();
+
+  if (error || !data?.user) {
+    showLogin();
+    return;
+  }
+
+  const allowed = await verifyAdmin(data.user.id);
+
+  if (!allowed) {
+    await supabaseClient.auth.signOut();
+    showLogin();
+    adminMessage.textContent = "This account is not authorized for church administration.";
+    return;
+  }
+
+  showDashboard(data.user);
+}
+
+async function initializeAuth() {
+  if (!configIsReady()) {
+    loginForm.querySelector('button[type="submit"]').disabled = true;
+    emailInput.disabled = true;
+    passwordInput.disabled = true;
+
+    adminMessage.textContent =
+      "Secure login setup is not finished yet. Add the Supabase Project URL and publishable key to supabase-config.js.";
+
+    securityNote.innerHTML = `
+      <span>🔧</span>
+      <span>
+        This admin page is locked until Supabase is configured. No preview bypass is available.
+      </span>
+    `;
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(
+    window.SHEKINAH_SUPABASE.url,
+    window.SHEKINAH_SUPABASE.publishableKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  await restoreAuthenticatedAdmin();
+
+  supabaseClient.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") {
+      showLogin();
+    }
+  });
+}
 
 passwordToggle.addEventListener("click", () => {
   const showing = passwordInput.type === "text";
@@ -14,25 +127,68 @@ passwordToggle.addEventListener("click", () => {
   passwordToggle.textContent = showing ? "Show" : "Hide";
 });
 
-loginForm.addEventListener("submit", (event) => {
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  // SECURITY NOTE:
-  // We deliberately do NOT authenticate in frontend JavaScript.
-  // A real auth provider/backend will be connected later.
-  adminMessage.textContent =
-    "Secure sign-in is not connected yet. Use “Preview the admin dashboard” while we build the interface.";
+  if (!supabaseClient) {
+    adminMessage.textContent = "Secure authentication has not been configured yet.";
+    return;
+  }
 
-  document.getElementById("adminPassword").value = "";
+  setLoginBusy(true);
+  adminMessage.textContent = "";
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    passwordInput.value = "";
+
+    if (error || !data?.user) {
+      adminMessage.textContent = "Unable to sign in. Check the email and password.";
+      return;
+    }
+
+    // getUser() performs a network validation against Supabase Auth.
+    const { data: verified, error: verifyError } = await supabaseClient.auth.getUser();
+
+    if (verifyError || !verified?.user) {
+      await supabaseClient.auth.signOut();
+      adminMessage.textContent = "Unable to verify this session.";
+      return;
+    }
+
+    const allowed = await verifyAdmin(verified.user.id);
+
+    if (!allowed) {
+      await supabaseClient.auth.signOut();
+      adminMessage.textContent = "This account is not authorized for church administration.";
+      return;
+    }
+
+    showDashboard(verified.user);
+  } catch (error) {
+    console.error(error);
+    adminMessage.textContent = "A secure sign-in error occurred. Please try again.";
+  } finally {
+    setLoginBusy(false);
+  }
 });
 
-previewDashboardButton.addEventListener("click", () => {
-  loginView.classList.add("hidden");
-  dashboard.classList.add("visible");
-  loadDraft();
-  updatePreview();
+signOutButton.addEventListener("click", async () => {
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  showLogin();
+  adminMessage.textContent = "Signed out securely.";
 });
 
+// Newsletter editor
 document.querySelectorAll(".editor-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     const lang = tab.dataset.editorLang;
@@ -122,6 +278,8 @@ document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
 document.getElementById("clearDraftButton").addEventListener("click", clearDraft);
 
 function saveDraft() {
+  if (!authenticatedAdmin) return;
+
   localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData()));
   document.getElementById("draftStatus").textContent =
     "Draft saved on this device.";
@@ -153,9 +311,10 @@ function clearDraft() {
 }
 
 document.getElementById("publishButton").addEventListener("click", () => {
+  if (!authenticatedAdmin) return;
   saveDraft();
   document.getElementById("draftStatus").textContent =
-    "Draft saved. Live publishing will be enabled after we connect secure authentication and a backend.";
+    "Draft saved. Secure live publishing is the next backend step.";
 });
 
 const today = new Date();
@@ -168,3 +327,4 @@ if (!document.getElementById("issueDate").value) {
 }
 
 updatePreview();
+initializeAuth();

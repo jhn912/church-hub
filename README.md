@@ -2,7 +2,24 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.4.1
+## Current version: 0.5
+
+### New in v0.5
+
+- Removed the admin dashboard preview bypass
+- Added real Supabase email/password authentication integration
+- Added persistent authenticated sessions
+- Added secure sign out
+- Added an `admin_users` allow-list check
+- Added SQL setup for Row Level Security
+- Admin editor remains inaccessible until authentication is configured
+- Added `supabase-config.js` for the public Project URL and publishable key only
+
+### Important security rule
+
+Only put the Supabase **publishable** key in `supabase-config.js`.
+
+Never commit a Supabase **secret** key or legacy `service_role` key to GitHub.
 
 ### v0.4.1 fix
 
@@ -104,3 +121,15 @@ The newest issue should be placed at the top of the list. Each issue has:
 - Events calendar
 - Easier newsletter editor
 - AI-assisted newsletter drafting with human review
+
+
+## Secure admin setup
+
+1. Create a Supabase project.
+2. Copy the Project URL and Publishable key into `supabase-config.js`.
+3. Create the administrator account in Supabase Authentication.
+4. Run `supabase-admin-setup.sql` in the SQL Editor.
+5. Add the administrator user's UUID to `public.admin_users`.
+6. Disable public signups for the project because this site has no public registration flow.
+
+The admin page checks the user's identity against Supabase Auth and then verifies that the authenticated user is present in the `admin_users` allow-list.
