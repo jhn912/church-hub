@@ -48,4 +48,9 @@ create index if not exists admin_users_role_idx
 revoke insert, update, delete on public.admin_users from anon, authenticated;
 grant select on public.admin_users to authenticated;
 
+-- New Supabase projects no longer necessarily grant application tables to the
+-- service_role automatically. The protected Edge Function uses ctx.supabaseAdmin,
+-- which bypasses RLS but still requires ordinary PostgreSQL table privileges.
+grant select, insert, update, delete on public.admin_users to service_role;
+
 commit;
