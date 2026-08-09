@@ -26,6 +26,7 @@
       .administrator-meta { margin-top: 4px; color: #7b8490; font-size: .8rem; }
       .administrator-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
       .administrator-actions select { border: 1px solid #cbd2d9; border-radius: 999px; padding: 8px 30px 8px 12px; background: white; font: inherit; font-weight: 700; }
+      .administrator-actions select:disabled { opacity: .65; cursor: not-allowed; }
       .administrator-role { display: inline-flex; width: fit-content; margin-top: 7px; border-radius: 999px; padding: 5px 9px; background: #ecefe2; color: #43512f; font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
       .administrator-role.owner { background: #e5edc3; color: #304017; }
       .administrator-status { min-height: 22px; margin-top: 13px; color: #6b705c; font-size: .84rem; font-weight: 700; }
@@ -173,6 +174,10 @@
         option.selected = admin.role === value;
         select.appendChild(option);
       });
+      select.disabled = isCurrentUser;
+      select.title = isCurrentUser
+        ? "Your own Owner role cannot be changed from this page."
+        : "Change administrator role";
       select.addEventListener("change", async () => {
         const previousRole = admin.role;
         select.disabled = true;
@@ -184,7 +189,7 @@
           select.value = previousRole;
           window.alert(error.message || "Could not change this administrator's role.");
         } finally {
-          select.disabled = false;
+          select.disabled = isCurrentUser;
         }
       });
 
@@ -193,7 +198,7 @@
       remove.type = "button";
       remove.textContent = "Remove";
       remove.disabled = isCurrentUser;
-      remove.title = isCurrentUser ? "You cannot remove your own owner access here." : "Remove administrator access";
+      remove.title = isCurrentUser ? "You cannot remove your own Owner access here." : "Remove administrator access";
       remove.addEventListener("click", async () => {
         if (!window.confirm(`Remove administrator access for ${admin.email || "this account"}?`)) return;
         remove.disabled = true;
@@ -228,9 +233,13 @@
     try {
       const result = await invokeAdminFunction({ action: "invite", email });
       emailInput.value = "";
-      status.textContent = result?.invited
-        ? "Invitation sent. The account has been added as an Admin."
-        : "Existing Supabase account authorized as an Admin.";
+      if (result?.alreadyAuthorized) {
+        status.textContent = `That account already has ${result.role === "owner" ? "Owner" : "Admin"} access.`;
+      } else if (result?.invited) {
+        status.textContent = "Invitation sent. The account has been added as an Admin.";
+      } else {
+        status.textContent = "Existing Supabase account authorized as an Admin.";
+      }
       await loadAdministrators();
     } catch (error) {
       console.error(error);
