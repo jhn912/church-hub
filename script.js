@@ -101,6 +101,7 @@ function applyLanguage(language) {
 
   if (document.body.dataset.page === "home") {
     loadAnnouncements();
+    loadServiceSettings();
   }
 
   if (document.body.dataset.page === "newsletter") {
@@ -220,6 +221,55 @@ function renderNewsletter(issue, container) {
       `;
     }).join("")}
   `;
+}
+
+
+async function loadServiceSettings() {
+  if (document.body.dataset.page !== "home") return;
+
+  try {
+    const response = await fetch("service.json", { cache: "no-store" });
+    const service = await response.json();
+
+    const isSpanish = currentLanguage === "es";
+    const serviceLabel =
+      service[isSpanish ? "service_label_es" : "service_label_en"] ||
+      (isSpanish ? "Servicio Dominical" : "Sunday Service");
+    const day =
+      service[isSpanish ? "day_es" : "day_en"] ||
+      (isSpanish ? "Domingo" : "Sunday");
+    const specialMessage =
+      service[isSpanish ? "special_message_es" : "special_message_en"];
+
+    const displayTime = service.time_display || "3:00 PM";
+
+    const heroLabel = document.getElementById("heroServiceLabel");
+    const heroTime = document.getElementById("heroServiceTime");
+    const dayLabel = document.getElementById("serviceDayLabel");
+    const sectionLabel = document.getElementById("serviceSectionLabel");
+    const sectionTime = document.getElementById("serviceSectionTime");
+    const visitDay = document.getElementById("visitServiceDay");
+    const visitTime = document.getElementById("visitServiceTime");
+    const message = document.getElementById("specialServiceMessage");
+
+    if (heroLabel) heroLabel.textContent = serviceLabel;
+    if (heroTime) heroTime.textContent = displayTime;
+    if (dayLabel) dayLabel.textContent = isSpanish ? `Todos los ${day.toLowerCase()}s` : `Every ${day}`;
+    if (sectionLabel) sectionLabel.textContent = serviceLabel;
+    if (sectionTime) sectionTime.textContent = displayTime;
+    if (visitDay) visitDay.textContent = day;
+    if (visitTime) visitTime.textContent = displayTime;
+
+    if (message) {
+      message.textContent =
+        specialMessage ||
+        (isSpanish
+          ? "Esperamos darte la bienvenida."
+          : "We look forward to welcoming you.");
+    }
+  } catch (error) {
+    console.error("Unable to load service settings:", error);
+  }
 }
 
 function escapeHtml(value = "") {

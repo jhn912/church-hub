@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=5.0" />
+  <link rel="stylesheet" href="style.css?v=6.0" />
 </head>
 <body class="admin-body">
   <main class="admin-main">
@@ -81,157 +81,361 @@
         <div class="dashboard-header">
           <div>
             <p class="eyebrow">Administrator</p>
-            <h1>Newsletter Editor</h1>
+            <h1>Church Content</h1>
             <p class="dashboard-subtitle">
-              Create a bilingual newsletter and preview how it will look before publishing.
+              Manage service information, announcements, and the weekly newsletter.
             </p>
           </div>
 
           <div class="dashboard-actions">
-            <a href="newsletter.html" class="button admin-button-secondary">View Website</a>
+            <a href="index.html" class="button admin-button-secondary">View Website</a>
             <button class="button admin-button-secondary" id="signOutButton" type="button">Sign Out</button>
-            <button class="button button-primary" id="saveDraftButton" type="button">Save Draft</button>
           </div>
         </div>
 
-        <div class="admin-editor-grid">
-          <section class="editor-panel">
-            <h2>Create Newsletter</h2>
+        <nav class="admin-content-tabs" aria-label="Admin content sections">
+          <button class="admin-content-tab active" type="button" data-admin-section="service">
+            Service
+          </button>
+          <button class="admin-content-tab" type="button" data-admin-section="announcements">
+            Announcements
+          </button>
+          <button class="admin-content-tab" type="button" data-admin-section="newsletter">
+            Newsletter
+          </button>
+        </nav>
 
-            <div class="editor-fields">
-              <div class="editor-row">
+        <!-- SERVICE SETTINGS -->
+        <section class="admin-content-section active" data-admin-panel="service">
+          <div class="section-admin-heading">
+            <div>
+              <p class="eyebrow">Weekly information</p>
+              <h2>Service Settings</h2>
+              <p>Change the service day, time, and an optional special message.</p>
+            </div>
+            <button class="button button-primary" id="saveServiceButton" type="button">
+              Save Service Draft
+            </button>
+          </div>
+
+          <div class="admin-editor-grid">
+            <div class="editor-panel">
+              <div class="editor-fields">
+                <div class="editor-row">
+                  <div class="editor-field">
+                    <label>
+                      Service time
+                      <input type="time" id="serviceTimeInput" value="15:00" />
+                    </label>
+                  </div>
+                  <div class="editor-field">
+                    <label>
+                      Display time
+                      <input type="text" id="serviceTimeDisplayInput" value="3:00 PM" />
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-row">
+                  <div class="editor-field">
+                    <label>
+                      Day — English
+                      <input type="text" id="serviceDayEn" value="Sunday" />
+                    </label>
+                  </div>
+                  <div class="editor-field">
+                    <label>
+                      Día — Español
+                      <input type="text" id="serviceDayEs" value="Domingo" />
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-row">
+                  <div class="editor-field">
+                    <label>
+                      Service title — English
+                      <input type="text" id="serviceLabelEn" value="Sunday Service" />
+                    </label>
+                  </div>
+                  <div class="editor-field">
+                    <label>
+                      Título del servicio — Español
+                      <input type="text" id="serviceLabelEs" value="Servicio Dominical" />
+                    </label>
+                  </div>
+                </div>
+
                 <div class="editor-field">
                   <label>
-                    Issue date
-                    <input type="date" id="issueDate" />
+                    Special message — English
+                    <textarea id="serviceMessageEn" placeholder="Example: Communion service this Sunday."></textarea>
                   </label>
                 </div>
 
                 <div class="editor-field">
                   <label>
-                    Status
-                    <select id="issueStatus">
-                      <option value="draft">Draft</option>
-                      <option value="ready">Ready to publish</option>
-                    </select>
+                    Mensaje especial — Español
+                    <textarea id="serviceMessageEs" placeholder="Ejemplo: Servicio de comunión este domingo."></textarea>
                   </label>
                 </div>
               </div>
 
-              <div class="editor-language-tabs">
-                <button class="editor-tab active" type="button" data-editor-lang="en">English</button>
-                <button class="editor-tab" type="button" data-editor-lang="es">Español</button>
-              </div>
-
-              <div class="editor-language-panel active" data-editor-panel="en">
-                <div class="editor-field">
-                  <label>
-                    Newsletter title
-                    <input id="titleEn" type="text" value="This Week at Ministerio Shekinah" />
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Sunday Gathering
-                    <textarea id="gatheringEn">Join us this Sunday at 3:00 PM for worship and fellowship.</textarea>
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Weekly Scripture
-                    <textarea id="scriptureEn" placeholder="Add this week's scripture passage..."></textarea>
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Community Update
-                    <textarea id="communityEn" placeholder="Add church announcements, reminders, or ministry updates..."></textarea>
-                  </label>
-                </div>
-              </div>
-
-              <div class="editor-language-panel" data-editor-panel="es">
-                <div class="editor-field">
-                  <label>
-                    Título del boletín
-                    <input id="titleEs" type="text" value="Esta Semana en Ministerio Shekinah" />
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Reunión del Domingo
-                    <textarea id="gatheringEs">Acompáñanos este domingo a las 3:00 PM para un tiempo de adoración y comunión.</textarea>
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Escritura de la Semana
-                    <textarea id="scriptureEs" placeholder="Agrega el pasaje bíblico de esta semana..."></textarea>
-                  </label>
-                </div>
-
-                <div class="editor-field">
-                  <label>
-                    Actualización de la Comunidad
-                    <textarea id="communityEs" placeholder="Agrega anuncios, recordatorios o actualizaciones de ministerios..."></textarea>
-                  </label>
-                </div>
-              </div>
-
-              <p class="editor-helper">
-                For now, Save Draft stores the draft only in this browser on this device.
-                Publishing to the live site will be connected with the secure backend.
-              </p>
+              <p class="draft-status" id="serviceDraftStatus"></p>
             </div>
 
-            <div class="editor-toolbar">
-              <button class="button admin-button-secondary" id="clearDraftButton" type="button">Clear Draft</button>
-              <button class="button button-primary" id="publishButton" type="button">Publish Newsletter</button>
+            <aside class="preview-panel">
+              <h2>Service Preview</h2>
+              <div class="service-admin-preview">
+                <p class="card-label" id="servicePreviewDay">Sunday</p>
+                <h3 id="servicePreviewLabel">Sunday Service</h3>
+                <p class="big-time" id="servicePreviewTime">3:00 PM</p>
+                <p id="servicePreviewMessage">We look forward to welcoming you.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ANNOUNCEMENTS -->
+        <section class="admin-content-section" data-admin-panel="announcements">
+          <div class="section-admin-heading">
+            <div>
+              <p class="eyebrow">Church updates</p>
+              <h2>Announcements</h2>
+              <p>Add, edit, hide, or remove announcements in both languages.</p>
             </div>
+            <button class="button button-primary" id="addAnnouncementButton" type="button">
+              + Add Announcement
+            </button>
+          </div>
 
-            <p class="draft-status" id="draftStatus"></p>
-          </section>
+          <div class="announcement-admin-layout">
+            <div class="announcement-admin-list" id="adminAnnouncementList"></div>
 
-          <aside class="preview-panel">
-            <h2>Live Preview</h2>
-
-            <div class="preview-newsletter">
-              <div class="preview-newsletter-header">
-                <p>Ministerio Shekinah</p>
-                <h3 id="previewTitle">This Week at Ministerio Shekinah</h3>
-                <span class="preview-newsletter-date" id="previewDate">Draft issue</span>
+            <div class="editor-panel announcement-editor" id="announcementEditor">
+              <div class="announcement-editor-empty" id="announcementEmptyState">
+                <p>Select an announcement to edit, or create a new one.</p>
               </div>
 
-              <div class="preview-newsletter-body">
-                <section class="preview-section">
-                  <h4 id="previewGatheringHeading">Sunday Gathering</h4>
-                  <p id="previewGathering"></p>
-                </section>
+              <div class="announcement-editor-form hidden" id="announcementEditorForm">
+                <div class="editor-row">
+                  <div class="editor-field">
+                    <label>
+                      Status
+                      <select id="announcementActive">
+                        <option value="true">Active</option>
+                        <option value="false">Hidden</option>
+                      </select>
+                    </label>
+                  </div>
 
-                <section class="preview-section">
-                  <h4 id="previewScriptureHeading">Weekly Scripture</h4>
-                  <p id="previewScripture">Your scripture will appear here.</p>
-                </section>
+                  <div class="editor-field">
+                    <label>
+                      Internal ID
+                      <input type="text" id="announcementId" />
+                    </label>
+                  </div>
+                </div>
 
-                <section class="preview-section">
-                  <h4 id="previewCommunityHeading">Community Update</h4>
-                  <p id="previewCommunity">Your community update will appear here.</p>
-                </section>
+                <div class="editor-language-tabs">
+                  <button class="editor-tab announcement-lang-tab active" type="button" data-announcement-lang="en">
+                    English
+                  </button>
+                  <button class="editor-tab announcement-lang-tab" type="button" data-announcement-lang="es">
+                    Español
+                  </button>
+                </div>
+
+                <div class="announcement-lang-panel active" data-announcement-panel="en">
+                  <div class="editor-field">
+                    <label>Tag <input type="text" id="announcementTagEn" /></label>
+                  </div>
+                  <div class="editor-field">
+                    <label>Title <input type="text" id="announcementTitleEn" /></label>
+                  </div>
+                  <div class="editor-field">
+                    <label>Description <textarea id="announcementDescriptionEn"></textarea></label>
+                  </div>
+                </div>
+
+                <div class="announcement-lang-panel" data-announcement-panel="es">
+                  <div class="editor-field">
+                    <label>Etiqueta <input type="text" id="announcementTagEs" /></label>
+                  </div>
+                  <div class="editor-field">
+                    <label>Título <input type="text" id="announcementTitleEs" /></label>
+                  </div>
+                  <div class="editor-field">
+                    <label>Descripción <textarea id="announcementDescriptionEs"></textarea></label>
+                  </div>
+                </div>
+
+                <div class="editor-toolbar">
+                  <button class="button admin-button-secondary" id="deleteAnnouncementButton" type="button">
+                    Delete
+                  </button>
+                  <button class="button button-primary" id="saveAnnouncementButton" type="button">
+                    Save Announcement Draft
+                  </button>
+                </div>
+
+                <p class="draft-status" id="announcementDraftStatus"></p>
               </div>
             </div>
-          </aside>
+          </div>
+        </section>
+
+        <!-- NEWSLETTER -->
+        <section class="admin-content-section" data-admin-panel="newsletter">
+          <div class="section-admin-heading">
+            <div>
+              <p class="eyebrow">Weekly publication</p>
+              <h2>Newsletter Editor</h2>
+              <p>Create a bilingual newsletter and preview it before publishing.</p>
+            </div>
+            <button class="button button-primary" id="saveDraftButton" type="button">
+              Save Newsletter Draft
+            </button>
+          </div>
+
+          <div class="admin-editor-grid">
+            <section class="editor-panel">
+              <div class="editor-fields">
+                <div class="editor-row">
+                  <div class="editor-field">
+                    <label>
+                      Issue date
+                      <input type="date" id="issueDate" />
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Status
+                      <select id="issueStatus">
+                        <option value="draft">Draft</option>
+                        <option value="ready">Ready to publish</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-language-tabs">
+                  <button class="editor-tab active" type="button" data-editor-lang="en">English</button>
+                  <button class="editor-tab" type="button" data-editor-lang="es">Español</button>
+                </div>
+
+                <div class="editor-language-panel active" data-editor-panel="en">
+                  <div class="editor-field">
+                    <label>
+                      Newsletter title
+                      <input id="titleEn" type="text" value="This Week at Ministerio Shekinah" />
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Sunday Gathering
+                      <textarea id="gatheringEn">Join us this Sunday at 3:00 PM for worship and fellowship.</textarea>
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Weekly Scripture
+                      <textarea id="scriptureEn" placeholder="Add this week's scripture passage..."></textarea>
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Community Update
+                      <textarea id="communityEn" placeholder="Add church announcements, reminders, or ministry updates..."></textarea>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-language-panel" data-editor-panel="es">
+                  <div class="editor-field">
+                    <label>
+                      Título del boletín
+                      <input id="titleEs" type="text" value="Esta Semana en Ministerio Shekinah" />
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Reunión del Domingo
+                      <textarea id="gatheringEs">Acompáñanos este domingo a las 3:00 PM para un tiempo de adoración y comunión.</textarea>
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Escritura de la Semana
+                      <textarea id="scriptureEs" placeholder="Agrega el pasaje bíblico de esta semana..."></textarea>
+                    </label>
+                  </div>
+
+                  <div class="editor-field">
+                    <label>
+                      Actualización de la Comunidad
+                      <textarea id="communityEs" placeholder="Agrega anuncios, recordatorios o actualizaciones de ministerios..."></textarea>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="editor-toolbar">
+                <button class="button admin-button-secondary" id="clearDraftButton" type="button">Clear Draft</button>
+                <button class="button button-primary" id="publishButton" type="button">Publish Newsletter</button>
+              </div>
+
+              <p class="draft-status" id="draftStatus"></p>
+            </section>
+
+            <aside class="preview-panel">
+              <h2>Live Preview</h2>
+
+              <div class="preview-newsletter">
+                <div class="preview-newsletter-header">
+                  <p>Ministerio Shekinah</p>
+                  <h3 id="previewTitle">This Week at Ministerio Shekinah</h3>
+                  <span class="preview-newsletter-date" id="previewDate">Draft issue</span>
+                </div>
+
+                <div class="preview-newsletter-body">
+                  <section class="preview-section">
+                    <h4 id="previewGatheringHeading">Sunday Gathering</h4>
+                    <p id="previewGathering"></p>
+                  </section>
+
+                  <section class="preview-section">
+                    <h4 id="previewScriptureHeading">Weekly Scripture</h4>
+                    <p id="previewScripture">Your scripture will appear here.</p>
+                  </section>
+
+                  <section class="preview-section">
+                    <h4 id="previewCommunityHeading">Community Update</h4>
+                    <p id="previewCommunity">Your community update will appear here.</p>
+                  </section>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <div class="admin-backend-note">
+          <strong>Backend status:</strong>
+          These editors are ready. Until Supabase is connected, Save stores drafts only on this device.
+          After the database is connected, the same controls will update the live website.
         </div>
       </section>
     </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=5.0"></script>
-  <script src="admin.js?v=5.0"></script>
+  <script src="supabase-config.js?v=6.0"></script>
+  <script src="admin.js?v=6.0"></script>
 </body>
 </html>

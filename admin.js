@@ -188,12 +188,261 @@ signOutButton.addEventListener("click", async () => {
   adminMessage.textContent = "Signed out securely.";
 });
 
+// ------------------------------------
+// Admin content navigation
+// ------------------------------------
+document.querySelectorAll(".admin-content-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const section = tab.dataset.adminSection;
+
+    document.querySelectorAll(".admin-content-tab").forEach((item) => {
+      item.classList.toggle("active", item === tab);
+    });
+
+    document.querySelectorAll(".admin-content-section").forEach((panel) => {
+      panel.classList.toggle("active", panel.dataset.adminPanel === section);
+    });
+  });
+});
+
+// ------------------------------------
+// Service settings editor
+// ------------------------------------
+const SERVICE_DRAFT_KEY = "ministerioShekinahServiceDraft";
+const serviceFieldIds = [
+  "serviceTimeInput",
+  "serviceTimeDisplayInput",
+  "serviceDayEn",
+  "serviceDayEs",
+  "serviceLabelEn",
+  "serviceLabelEs",
+  "serviceMessageEn",
+  "serviceMessageEs"
+];
+
+serviceFieldIds.forEach((id) => {
+  const element = document.getElementById(id);
+  element.addEventListener("input", updateServicePreview);
+  element.addEventListener("change", updateServicePreview);
+});
+
+function serviceDraftData() {
+  return {
+    time: document.getElementById("serviceTimeInput").value,
+    time_display: document.getElementById("serviceTimeDisplayInput").value,
+    day_en: document.getElementById("serviceDayEn").value,
+    day_es: document.getElementById("serviceDayEs").value,
+    service_label_en: document.getElementById("serviceLabelEn").value,
+    service_label_es: document.getElementById("serviceLabelEs").value,
+    special_message_en: document.getElementById("serviceMessageEn").value,
+    special_message_es: document.getElementById("serviceMessageEs").value
+  };
+}
+
+function updateServicePreview() {
+  const data = serviceDraftData();
+  document.getElementById("servicePreviewDay").textContent = data.day_en || "Sunday";
+  document.getElementById("servicePreviewLabel").textContent =
+    data.service_label_en || "Sunday Service";
+  document.getElementById("servicePreviewTime").textContent =
+    data.time_display || "3:00 PM";
+  document.getElementById("servicePreviewMessage").textContent =
+    data.special_message_en || "We look forward to welcoming you.";
+}
+
+async function loadServiceEditor() {
+  const saved = localStorage.getItem(SERVICE_DRAFT_KEY);
+
+  if (saved) {
+    try {
+      applyServiceEditorData(JSON.parse(saved));
+      document.getElementById("serviceDraftStatus").textContent =
+        "Saved service draft restored from this device.";
+      return;
+    } catch {
+      localStorage.removeItem(SERVICE_DRAFT_KEY);
+    }
+  }
+
+  try {
+    const response = await fetch("service.json", { cache: "no-store" });
+    const data = await response.json();
+    applyServiceEditorData(data);
+  } catch (error) {
+    console.error("Unable to load service settings:", error);
+  }
+}
+
+function applyServiceEditorData(data) {
+  document.getElementById("serviceTimeInput").value = data.time || "15:00";
+  document.getElementById("serviceTimeDisplayInput").value = data.time_display || "3:00 PM";
+  document.getElementById("serviceDayEn").value = data.day_en || "Sunday";
+  document.getElementById("serviceDayEs").value = data.day_es || "Domingo";
+  document.getElementById("serviceLabelEn").value = data.service_label_en || "Sunday Service";
+  document.getElementById("serviceLabelEs").value = data.service_label_es || "Servicio Dominical";
+  document.getElementById("serviceMessageEn").value = data.special_message_en || "";
+  document.getElementById("serviceMessageEs").value = data.special_message_es || "";
+  updateServicePreview();
+}
+
+document.getElementById("saveServiceButton").addEventListener("click", () => {
+  if (!authenticatedAdmin) return;
+  localStorage.setItem(SERVICE_DRAFT_KEY, JSON.stringify(serviceDraftData()));
+  document.getElementById("serviceDraftStatus").textContent =
+    "Service draft saved on this device. Live publishing will be connected to Supabase.";
+});
+
+// ------------------------------------
+// Announcement editor
+// ------------------------------------
+const ANNOUNCEMENT_DRAFT_KEY = "ministerioShekinahAnnouncementsDraft";
+let adminAnnouncements = [];
+let selectedAnnouncementIndex = null;
+
+async function loadAnnouncementEditor() {
+  const saved = localStorage.getItem(ANNOUNCEMENT_DRAFT_KEY);
+
+  if (saved) {
+    try {
+      adminAnnouncements = JSON.parse(saved);
+      renderAdminAnnouncementList();
+      return;
+    } catch {
+      localStorage.removeItem(ANNOUNCEMENT_DRAFT_KEY);
+    }
+  }
+
+  try {
+    const response = await fetch("announcements.json", { cache: "no-store" });
+    adminAnnouncements = await response.json();
+    renderAdminAnnouncementList();
+  } catch (error) {
+    console.error("Unable to load announcements:", error);
+    adminAnnouncements = [];
+    renderAdminAnnouncementList();
+  }
+}
+
+function renderAdminAnnouncementList() {
+  const list = document.getElementById("adminAnnouncementList");
+
+  if (!adminAnnouncements.length) {
+    list.innerHTML = `<div class="editor-panel"><p>No announcements yet.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = adminAnnouncements.map((item, index) => `
+    <button class="admin-announcement-item ${selectedAnnouncementIndex === index ? "selected" : ""}"
+            type="button"
+            data-announcement-index="${index}">
+      <div class="admin-announcement-item-top">
+        <span class="tag">${escapeAdminHtml(item.tag_en || "Update")}</span>
+        <span class="admin-announcement-status">${item.active === false ? "Hidden" : "Active"}</span>
+      </div>
+      <h3>${escapeAdminHtml(item.title_en || "Untitled announcement")}</h3>
+      <p>${escapeAdminHtml(item.description_en || "")}</p>
+    </button>
+  `).join("");
+
+  list.querySelectorAll("[data-announcement-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectAnnouncement(Number(button.dataset.announcementIndex));
+    });
+  });
+}
+
+function selectAnnouncement(index) {
+  selectedAnnouncementIndex = index;
+  const item = adminAnnouncements[index];
+
+  document.getElementById("announcementEmptyState").style.display = "none";
+  document.getElementById("announcementEditorForm").classList.remove("hidden");
+
+  document.getElementById("announcementActive").value =
+    item.active === false ? "false" : "true";
+  document.getElementById("announcementId").value = item.id || "";
+  document.getElementById("announcementTagEn").value = item.tag_en || "";
+  document.getElementById("announcementTagEs").value = item.tag_es || "";
+  document.getElementById("announcementTitleEn").value = item.title_en || "";
+  document.getElementById("announcementTitleEs").value = item.title_es || "";
+  document.getElementById("announcementDescriptionEn").value = item.description_en || "";
+  document.getElementById("announcementDescriptionEs").value = item.description_es || "";
+
+  renderAdminAnnouncementList();
+}
+
+document.getElementById("addAnnouncementButton").addEventListener("click", () => {
+  const newAnnouncement = {
+    id: `announcement-${Date.now()}`,
+    active: true,
+    tag_en: "Update",
+    tag_es: "Actualización",
+    title_en: "New Announcement",
+    title_es: "Nuevo Anuncio",
+    description_en: "",
+    description_es: ""
+  };
+
+  adminAnnouncements.unshift(newAnnouncement);
+  selectAnnouncement(0);
+});
+
+document.querySelectorAll(".announcement-lang-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const lang = tab.dataset.announcementLang;
+
+    document.querySelectorAll(".announcement-lang-tab").forEach((item) => {
+      item.classList.toggle("active", item === tab);
+    });
+
+    document.querySelectorAll(".announcement-lang-panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.dataset.announcementPanel === lang);
+    });
+  });
+});
+
+document.getElementById("saveAnnouncementButton").addEventListener("click", () => {
+  if (!authenticatedAdmin || selectedAnnouncementIndex === null) return;
+
+  adminAnnouncements[selectedAnnouncementIndex] = {
+    id: document.getElementById("announcementId").value.trim() || `announcement-${Date.now()}`,
+    active: document.getElementById("announcementActive").value === "true",
+    tag_en: document.getElementById("announcementTagEn").value,
+    tag_es: document.getElementById("announcementTagEs").value,
+    title_en: document.getElementById("announcementTitleEn").value,
+    title_es: document.getElementById("announcementTitleEs").value,
+    description_en: document.getElementById("announcementDescriptionEn").value,
+    description_es: document.getElementById("announcementDescriptionEs").value
+  };
+
+  localStorage.setItem(ANNOUNCEMENT_DRAFT_KEY, JSON.stringify(adminAnnouncements));
+  renderAdminAnnouncementList();
+  document.getElementById("announcementDraftStatus").textContent =
+    "Announcement draft saved on this device. Live publishing will be connected to Supabase.";
+});
+
+document.getElementById("deleteAnnouncementButton").addEventListener("click", () => {
+  if (!authenticatedAdmin || selectedAnnouncementIndex === null) return;
+
+  adminAnnouncements.splice(selectedAnnouncementIndex, 1);
+  selectedAnnouncementIndex = null;
+  localStorage.setItem(ANNOUNCEMENT_DRAFT_KEY, JSON.stringify(adminAnnouncements));
+
+  document.getElementById("announcementEditorForm").classList.add("hidden");
+  document.getElementById("announcementEmptyState").style.display = "grid";
+  renderAdminAnnouncementList();
+});
+
+// ------------------------------------
 // Newsletter editor
-document.querySelectorAll(".editor-tab").forEach((tab) => {
+// ------------------------------------
+const NEWSLETTER_DRAFT_KEY = "ministerioShekinahNewsletterDraft";
+
+document.querySelectorAll("[data-editor-lang]").forEach((tab) => {
   tab.addEventListener("click", () => {
     const lang = tab.dataset.editorLang;
 
-    document.querySelectorAll(".editor-tab").forEach((item) => {
+    document.querySelectorAll("[data-editor-lang]").forEach((item) => {
       item.classList.toggle("active", item === tab);
     });
 
@@ -201,11 +450,11 @@ document.querySelectorAll(".editor-tab").forEach((tab) => {
       panel.classList.toggle("active", panel.dataset.editorPanel === lang);
     });
 
-    updatePreview();
+    updateNewsletterPreview();
   });
 });
 
-const fieldIds = [
+const newsletterFieldIds = [
   "issueDate",
   "issueStatus",
   "titleEn",
@@ -218,22 +467,22 @@ const fieldIds = [
   "communityEs"
 ];
 
-fieldIds.forEach((id) => {
-  document.getElementById(id).addEventListener("input", updatePreview);
-  document.getElementById(id).addEventListener("change", updatePreview);
+newsletterFieldIds.forEach((id) => {
+  document.getElementById(id).addEventListener("input", updateNewsletterPreview);
+  document.getElementById(id).addEventListener("change", updateNewsletterPreview);
 });
 
 function activeEditorLanguage() {
-  return document.querySelector(".editor-tab.active")?.dataset.editorLang || "en";
+  return document.querySelector("[data-editor-lang].active")?.dataset.editorLang || "en";
 }
 
-function draftData() {
+function newsletterDraftData() {
   return Object.fromEntries(
-    fieldIds.map((id) => [id, document.getElementById(id).value])
+    newsletterFieldIds.map((id) => [id, document.getElementById(id).value])
   );
 }
 
-function updatePreview() {
+function updateNewsletterPreview() {
   const lang = activeEditorLanguage();
   const isSpanish = lang === "es";
 
@@ -274,49 +523,56 @@ function formatDate(dateString, language) {
   }).format(date);
 }
 
-document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
-document.getElementById("clearDraftButton").addEventListener("click", clearDraft);
-
-function saveDraft() {
+function saveNewsletterDraft() {
   if (!authenticatedAdmin) return;
-
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData()));
+  localStorage.setItem(NEWSLETTER_DRAFT_KEY, JSON.stringify(newsletterDraftData()));
   document.getElementById("draftStatus").textContent =
-    "Draft saved on this device.";
+    "Newsletter draft saved on this device.";
 }
 
-function loadDraft() {
-  const saved = localStorage.getItem(DRAFT_KEY);
+function loadNewsletterDraft() {
+  const saved = localStorage.getItem(NEWSLETTER_DRAFT_KEY);
   if (!saved) return;
 
   try {
     const values = JSON.parse(saved);
-    fieldIds.forEach((id) => {
+    newsletterFieldIds.forEach((id) => {
       if (values[id] !== undefined) {
         document.getElementById(id).value = values[id];
       }
     });
-
     document.getElementById("draftStatus").textContent =
-      "Saved draft restored from this device.";
+      "Saved newsletter draft restored from this device.";
   } catch {
-    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(NEWSLETTER_DRAFT_KEY);
   }
 }
 
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY);
+document.getElementById("saveDraftButton").addEventListener("click", saveNewsletterDraft);
+
+document.getElementById("clearDraftButton").addEventListener("click", () => {
+  localStorage.removeItem(NEWSLETTER_DRAFT_KEY);
   document.getElementById("draftStatus").textContent =
-    "Saved draft cleared. The form itself was left unchanged.";
-}
+    "Saved newsletter draft cleared. The form itself was left unchanged.";
+});
 
 document.getElementById("publishButton").addEventListener("click", () => {
   if (!authenticatedAdmin) return;
-  saveDraft();
+  saveNewsletterDraft();
   document.getElementById("draftStatus").textContent =
-    "Draft saved. Secure live publishing is the next backend step.";
+    "Draft saved. Live newsletter publishing will be connected to Supabase.";
 });
 
+function escapeAdminHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// Set today's newsletter date
 const today = new Date();
 const yyyy = today.getFullYear();
 const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -326,5 +582,17 @@ if (!document.getElementById("issueDate").value) {
   document.getElementById("issueDate").value = `${yyyy}-${mm}-${dd}`;
 }
 
-updatePreview();
+updateServicePreview();
+updateNewsletterPreview();
+
+// Extend showDashboard so all content loads after secure auth
+const originalShowDashboard = showDashboard;
+showDashboard = function(user) {
+  originalShowDashboard(user);
+  loadServiceEditor();
+  loadAnnouncementEditor();
+  loadNewsletterDraft();
+  updateNewsletterPreview();
+};
+
 initializeAuth();

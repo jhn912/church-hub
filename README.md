@@ -2,7 +2,33 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.5
+## Current version: 0.6
+
+### New in v0.6
+
+The administrator portal now manages all recurring church content:
+
+- **Service settings**
+  - Day in English and Spanish
+  - Service time
+  - Display time
+  - Bilingual service title
+  - Optional bilingual special message
+- **Announcements**
+  - Add new announcements
+  - Edit existing announcements
+  - English and Spanish versions
+  - Active/hidden status
+  - Delete announcements
+- **Newsletter**
+  - English and Spanish editor
+  - Issue date and status
+  - Live preview
+  - Scripture and community updates
+- Added `service.json` so the public homepage can load service information dynamically.
+
+Before Supabase is connected, the admin editor stores changes as browser drafts only.
+After Supabase is connected, these same controls will be wired to live database publishing.
 
 ### New in v0.5
 
@@ -71,7 +97,8 @@ Los Angeles, CA 90018
 - `announcements.json` — editable announcements
 - `newsletters.json` — editable newsletter issues
 - `admin.html` — admin login and newsletter editor interface
-- `admin.js` — admin preview and local draft behavior
+- `admin.js` — secure admin authentication and content-management behavior
+- `service.json` — current service settings
 
 ## Updating announcements
 
