@@ -24,9 +24,11 @@ Apply the committed migrations in order. Do not skip directly to the role migrat
    - Authenticated content writes require membership in `admin_users`.
 4. Apply `supabase/migrations/202608090004_service_role_least_privilege.sql`.
    - It limits `service_role` table access to the `admin_users` operations used by the protected Edge Function.
-5. Deploy `supabase/functions/admin-users/index.ts` as the Edge Function named `admin-users`.
-6. Sign out of the website admin portal, sign back in, and refresh the page.
-7. The **Administrators** tab appears only when the signed-in allow-listed account has `role = 'owner'`.
+5. Apply `supabase/migrations/202608090005_public_content_query_indexes.sql`.
+   - It adds indexes matching the public announcement and published-newsletter read paths.
+6. Deploy `supabase/functions/admin-users/index.ts` as the Edge Function named `admin-users`.
+7. Sign out of the website admin portal, sign back in, and refresh the page.
+8. The **Administrators** tab appears only when the signed-in allow-listed account has `role = 'owner'`.
 
 ### Required post-migration verification
 
