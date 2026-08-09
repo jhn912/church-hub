@@ -328,14 +328,14 @@ async function loadNewsletters() {
         .not("published_at", "is", null)
         .order("issue_date", { ascending: false });
 
-      if (!error && data?.length) {
-        issues = data.map(databaseNewsletterToDisplayIssue);
+      if (!error) {
+        issues = (data || []).map(databaseNewsletterToDisplayIssue);
+      } else {
+        console.error("Supabase newsletter read failed:", error);
       }
-
-      if (error) console.error("Supabase newsletter read failed:", error);
     }
 
-    if (!issues) {
+    if (issues === null) {
       const response = await fetch("newsletters.json", { cache: "no-store" });
       issues = await response.json();
     }
@@ -345,7 +345,12 @@ async function loadNewsletters() {
     const selectedIssue =
       issues.find((issue) => issue.id === requestedId) || issues[0];
 
-    if (!selectedIssue) throw new Error("No newsletter issues found.");
+    if (!selectedIssue) {
+      latestContainer.innerHTML =
+        `<div class="newsletter-empty-public"><h2>No published newsletter yet</h2><p>Check back for the next Ministerio Shekinah update.</p></div>`;
+      archiveContainer.innerHTML = `<p>—</p>`;
+      return;
+    }
 
     renderNewsletter(selectedIssue, latestContainer);
 
