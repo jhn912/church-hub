@@ -1,132 +1,123 @@
 # Ministerio Shekinah Church Hub
 
-A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
+A mobile-first bilingual church website and lightweight CMS for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.8.1
+## Live site
 
-### v0.8.1 — Loading and admin repair
+GitHub Pages serves the website from the `main` branch.
 
-- Restores the full `admin.js` application code.
-- Adds an on-screen warning if `admin.js` is missing or empty.
-- Pins the admin Supabase browser library to a specific version.
-- Public Service / Announcements / Newsletter pages now use native REST requests to Supabase and no longer depend on the external Supabase JavaScript CDN.
-- Adds a 10-second request timeout and visible public loading failure message.
+The public site reads current service information, active announcements, and published newsletters from Supabase. The admin portal uses Supabase Auth and an allow-list stored in `public.admin_users`.
 
-### v0.8 — Content management
+## Current production features
 
-- Newsletter management list with All / Draft / Ready / Published filters.
-- Select and edit any saved newsletter.
-- Published newsletters can be updated, unpublished, or permanently deleted.
-- Unpublishing keeps the issue private in the admin portal as Ready.
-- New newsletters begin as private drafts.
-- Announcement management list with All / Live / Hidden filters.
-- Announcements can be edited, published, hidden, or deleted.
-- New announcements begin hidden to prevent accidental blank public posts.
-- Public newsletter page no longer falls back to placeholder JSON when Supabase is connected but has zero published issues.
+- English / Spanish public website
+- Live service day and time
+- Apple Maps and Google Maps directions
+- Public announcements
+- Newsletter archive
+- Private admin portal
+- Announcement create / edit / publish / hide / delete
+- Newsletter draft / edit / publish / unpublish / delete
+- Owner / Admin roles
+- Owner-only administrator management
+- Protected Supabase Edge Function for administrator invitations and role changes
 
-### v0.7.1 — Service time + cache fix
+## Security model
 
-- Removed the separate Display Time field.
-- Admins now enter the service time only once.
-- The site automatically converts values such as `15:01` to `3:01 PM`.
-- Public pages derive their displayed time from the canonical `service_time` database value.
-- Bumped all admin/public asset versions to force Safari and GitHub Pages to load the live-publishing code.
+- Only a Supabase **publishable** key is present in browser code.
+- Never commit a Supabase secret key or legacy `service_role` key.
+- Supabase Auth verifies administrator identities.
+- `public.admin_users` is the authorization allow-list.
+- Row Level Security and PostgreSQL grants are the server-side authorization boundary.
+- Anonymous visitors can read only the singleton public service row, active announcements, and published newsletters.
+- Authenticated users who are not allow-listed do not receive CMS write access.
+- Allow-listed Admins can manage church content but cannot manage administrators.
+- Owners have content access plus administrator management.
+- The final Owner cannot be removed or demoted.
+- Browser clients cannot directly insert, update, or delete `admin_users` rows.
+- Administrator changes are performed by the protected `admin-users` Edge Function.
+- Public CMS pages fail closed when the configured Supabase backend is unavailable rather than displaying stale JSON content.
+- Editable public content is HTML-escaped before rendering.
 
-### New in v0.7 — Live publishing
+## Canonical Supabase setup
 
-The admin portal is now wired directly to Supabase:
+For a new project, apply the committed migrations **in order**:
 
-- Service changes save directly to `service_settings` and appear on the public homepage.
-- Announcements can be added, edited, hidden, or deleted live.
-- Newsletter drafts are stored privately in Supabase.
-- `Publish Newsletter` changes the newsletter status to published and sets `published_at`.
-- The public newsletter page only shows explicitly published issues.
-- Public pages now read Supabase first, with the old JSON files retained as fallback content.
-- The stale “Supabase is not connected” admin messages have been removed.
+1. `supabase/migrations/202608090001_complete_production_schema.sql`
+2. `supabase/migrations/202608090002_admin_roles.sql`
+3. `supabase/migrations/202608090003_security_hardening.sql`
+4. `supabase/migrations/202608090004_service_role_least_privilege.sql`
 
-Security remains enforced by Supabase Auth, the `admin_users` allow-list, Postgres grants, and Row Level Security.
+Then:
 
-### v0.6.1
+5. Create the initial administrator in Supabase Authentication.
+6. Add that user's UUID to `public.admin_users` if the allow-list is empty.
+7. Ensure at least one row in `public.admin_users` has `role = 'owner'`.
+8. Deploy `supabase/functions/admin-users/index.ts` as the `admin-users` Edge Function.
+9. Disable public signups because the website has no public registration flow.
+10. Verify the RLS and role behavior described in `ADMINISTRATORS_SETUP.md` before inviting additional administrators.
 
-- Connected the browser client to the Ministerio Shekinah Supabase project.
-- Added the public Project URL and publishable key.
-- Bumped the admin config asset version to avoid stale browser caching.
+`supabase-admin-setup.sql` is historical reference only. It is **not** the canonical production setup.
 
-### New in v0.6
+Do not automatically apply repository migrations to production. Review and apply database changes deliberately through a controlled Supabase deployment process.
 
-The administrator portal now manages all recurring church content:
+## Public content behavior
 
-- **Service settings**
-  - Day in English and Spanish
-  - Service time
-  - Display time
-  - Bilingual service title
-  - Optional bilingual special message
-- **Announcements**
-  - Add new announcements
-  - Edit existing announcements
-  - English and Spanish versions
-  - Active/hidden status
-  - Delete announcements
-- **Newsletter**
-  - English and Spanish editor
-  - Issue date and status
-  - Live preview
-  - Scripture and community updates
-- Added `service.json` so the public homepage can load service information dynamically.
+### Service settings
 
-Before Supabase is connected, the admin editor stores changes as browser drafts only.
-After Supabase is connected, these same controls will be wired to live database publishing.
+The homepage reads `public.service_settings` row `id = 1`. The service time is entered once in Admin and formatted for public display automatically.
 
-### New in v0.5
+### Announcements
 
-- Removed the admin dashboard preview bypass
-- Added real Supabase email/password authentication integration
-- Added persistent authenticated sessions
-- Added secure sign out
-- Added an `admin_users` allow-list check
-- Added SQL setup for Row Level Security
-- Admin editor remains inaccessible until authentication is configured
-- Added `supabase-config.js` for the public Project URL and publishable key only
+The public homepage reads active Supabase announcements only. The committed `announcements.json` file is intentionally empty so a backend outage cannot resurrect an announcement that was hidden or deleted in the CMS.
 
-### Important security rule
+### Newsletters
 
-Only put the Supabase **publishable** key in `supabase-config.js`.
+The public newsletter page reads only rows where:
 
-Never commit a Supabase **secret** key or legacy `service_role` key to GitHub.
+- `status = 'published'`
+- `published_at` is not null
 
-### v0.4.1 fix
+Older published issues remain available in the archive. Draft and Ready issues remain private. The committed `newsletters.json` file is intentionally empty so a backend outage cannot resurrect an unpublished issue.
 
-- Added cache-busting asset versions so browsers load the new admin CSS and JavaScript correctly.
-- Fixes the unstyled admin page caused by an older cached stylesheet.
+### Local development fallback
 
-### New in v0.4
+`service.json` remains as a harmless local/unconfigured fallback for service information. Once the production Supabase configuration is present, public CMS failures display an error instead of reverting to stale repository content.
 
-- Admin login page interface
-- Newsletter editor dashboard preview
-- English / Spanish newsletter editing
-- Live newsletter preview
-- Browser-only draft saving
-- Public developer note removed from announcements
-- Admin link added to the footer
+## Administrator roles
 
-### Security status
+### Owner
 
-The admin page is currently an interface prototype.
+- Manage service settings
+- Manage announcements
+- Manage newsletters
+- View the Administrators tab
+- Invite administrators
+- Promote or demote other administrators
+- Remove administrator access
 
-- Passwords are **not** stored or checked in JavaScript.
-- The sign-in form does **not** authenticate anyone yet.
-- Drafts are stored only in the current browser using `localStorage`.
-- The Publish button does **not** modify the live website yet.
+### Admin
 
-A secure authentication provider and backend must be connected before the admin system is used for real publishing.
+- Manage service settings
+- Manage announcements
+- Manage newsletters
+- Cannot manage administrator access
 
-### Existing features
+See `ADMINISTRATORS_SETUP.md` for the production administrator-management runbook.
 
-- English / Spanish language toggle
-- Dedicated newsletter page and archive
-- JSON-powered announcements
-- JSON-powered newsletter content
+## Main files
+
+- `index.html` — homepage
+- `newsletter.html` — newsletter and archive
+- `style.css` — shared styling
+- `script.js` — public language and Supabase content loading
+- `admin.html` — admin portal
+- `admin.js` — authentication and CMS behavior
+- `admin-service-validation.js` — verifies service row updates before reporting success
+- `administrators.js` — Owner-only administrator-management UI
+- `supabase-config.js` — public Supabase URL and publishable key only
+- `supabase/functions/admin-users/index.ts` — protected administrator-management Edge Function
+- `supabase/migrations/` — canonical database migrations
 
 ## Church information
 
@@ -134,77 +125,14 @@ A secure authentication provider and backend must be connected before the admin 
 2149 W Washington Blvd  
 Los Angeles, CA 90018
 
-**Sunday service:** 3:00 PM
-
-## Files
-
-- `index.html` — homepage
-- `newsletter.html` — newsletter and archive page
-- `style.css` — all website styling
-- `script.js` — language toggle and dynamic content
-- `announcements.json` — editable announcements
-- `newsletters.json` — editable newsletter issues
-- `admin.html` — admin login and newsletter editor interface
-- `admin.js` — secure admin authentication and content-management behavior
-- `service.json` — current service settings
-
-## Updating announcements
-
-Open `announcements.json`.
-
-Each announcement looks like this:
-
-```json
-{
-  "id": "example",
-  "active": true,
-  "tag_en": "Update",
-  "tag_es": "Actualización",
-  "title_en": "English title",
-  "title_es": "Título en español",
-  "description_en": "English announcement text.",
-  "description_es": "Texto del anuncio en español."
-}
-```
-
-Set `"active": false` to hide an announcement without deleting it.
-
-## Adding a newsletter
-
-Open `newsletters.json`.
-
-The newest issue should be placed at the top of the list. Each issue has:
-
-- a unique `id`
-- English and Spanish dates
-- English and Spanish titles
-- one or more content sections
+The service day and time shown publicly are managed through the admin portal and may change for special services.
 
 ## Technology
 
 - HTML
 - CSS
 - JavaScript
-- JSON
-- GitHub
 - GitHub Pages
-
-## Future ideas
-
-- Church photos and logo
-- Admin publishing page
-- Events calendar
-- Easier newsletter editor
-- AI-assisted newsletter drafting with human review
-
-
-## Secure admin setup
-
-1. Create a Supabase project.
-2. Copy the Project URL and Publishable key into `supabase-config.js`.
-3. Create the administrator account in Supabase Authentication.
-4. Run `supabase-admin-setup.sql` in the SQL Editor.
-5. Add the administrator user's UUID to `public.admin_users`.
-6. Disable public signups for the project because this site has no public registration flow.
-
-The admin page checks the user's identity against Supabase Auth and then verifies that the authenticated user is present in the `admin_users` allow-list.
+- Supabase Postgres
+- Supabase Auth
+- Supabase Edge Functions
