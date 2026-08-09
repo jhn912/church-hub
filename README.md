@@ -47,15 +47,16 @@ For a new project, apply the committed migrations **in order**:
 2. `supabase/migrations/202608090002_admin_roles.sql`
 3. `supabase/migrations/202608090003_security_hardening.sql`
 4. `supabase/migrations/202608090004_service_role_least_privilege.sql`
+5. `supabase/migrations/202608090005_public_content_query_indexes.sql`
 
 Then:
 
-5. Create the initial administrator in Supabase Authentication.
-6. Add that user's UUID to `public.admin_users` if the allow-list is empty.
-7. Ensure at least one row in `public.admin_users` has `role = 'owner'`.
-8. Deploy `supabase/functions/admin-users/index.ts` as the `admin-users` Edge Function.
-9. Disable public signups because the website has no public registration flow.
-10. Verify the RLS and role behavior described in `ADMINISTRATORS_SETUP.md` before inviting additional administrators.
+6. Create the initial administrator in Supabase Authentication.
+7. Add that user's UUID to `public.admin_users` if the allow-list is empty.
+8. Ensure at least one row in `public.admin_users` has `role = 'owner'`.
+9. Deploy `supabase/functions/admin-users/index.ts` as the `admin-users` Edge Function.
+10. Disable public signups because the website has no public registration flow.
+11. Verify the RLS and role behavior described in `ADMINISTRATORS_SETUP.md` before inviting additional administrators.
 
 `supabase-admin-setup.sql` is historical reference only. It is **not** the canonical production setup.
 
