@@ -2,7 +2,12 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.4
+## Current version: 0.4.1
+
+### v0.4.1 fix
+
+- Added cache-busting asset versions so browsers load the new admin CSS and JavaScript correctly.
+- Fixes the unstyled admin page caused by an older cached stylesheet.
 
 ### New in v0.4
 
