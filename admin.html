@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Ministerio Shekinah administration portal." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://nhzxlsjwsvyimozubbho.supabase.co wss://nhzxlsjwsvyimozubbho.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
   <title>Admin | Ministerio Shekinah</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +67,7 @@
             </form>
 
             <p class="admin-message" id="adminMessage"></p>
-<div class="admin-security-note">
+            <div class="admin-security-note">
               <span>🔒</span>
               <span>
                 Secure sign-in is handled by Supabase Auth. Only accounts on the
@@ -480,17 +481,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.2/dist/umd/supabase.js"></script>
-  <script src="supabase-config.js?v=8.1"></script>
+  <script src="supabase-config.js?v=8.2"></script>
   <script src="admin.js?v=8.1"></script>
-  <script>
-    setTimeout(function () {
-      if (!window.SHEKINAH_ADMIN_READY) {
-        var message = document.getElementById("adminMessage");
-        if (message) {
-          message.textContent = "Admin code failed to load. The admin.js file may be missing or empty.";
-        }
-      }
-    }, 2000);
-  </script>
 </body>
 </html>
