@@ -2,7 +2,13 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.6
+## Current version: 0.6.1
+
+### v0.6.1
+
+- Connected the browser client to the Ministerio Shekinah Supabase project.
+- Added the public Project URL and publishable key.
+- Bumped the admin config asset version to avoid stale browser caching.
 
 ### New in v0.6
 
