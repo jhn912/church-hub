@@ -1,25 +1,17 @@
 /*
   Defense-in-depth fix for service publishing.
-  This capture-phase handler runs before the legacy admin.js click handler and
+  This capture-phase handler runs before the legacy admin.js button handler and
   reports success only when Supabase confirms service_settings.id = 1 was updated.
+
+  The script is loaded only on admin.html after the main admin bundle starts. It
+  deliberately reuses admin.js's authenticated Supabase client instead of
+  creating a second Auth client in the same browser tab.
 */
 (function () {
   const button = document.getElementById("saveServiceButton");
   const status = document.getElementById("serviceDraftStatus");
 
-  if (!button || !status || !window.supabase || !window.SHEKINAH_SUPABASE) return;
-
-  const client = window.supabase.createClient(
-    window.SHEKINAH_SUPABASE.url,
-    window.SHEKINAH_SUPABASE.publishableKey,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    }
-  );
+  if (!button || !status) return;
 
   function formatServiceTime(timeValue) {
     if (!timeValue) return "3:00 PM";
@@ -46,10 +38,14 @@
       status.textContent = "";
 
       try {
-        const { data: userData, error: userError } = await client.auth.getUser();
+        if (!supabaseClient) {
+          throw new Error("Secure admin connection is not ready. Please refresh and try again.");
+        }
+
+        const { data: userData, error: userError } = await supabaseClient.auth.getUser();
         const user = userData?.user;
 
-        if (userError || !user) {
+        if (userError || !user || authenticatedAdmin?.id !== user.id) {
           throw new Error("Your admin session could not be verified. Please sign in again.");
         }
 
@@ -67,7 +63,7 @@
           updated_by: user.id
         };
 
-        const { data: savedService, error } = await client
+        const { data: savedService, error } = await supabaseClient
           .from("service_settings")
           .update(payload)
           .eq("id", 1)
