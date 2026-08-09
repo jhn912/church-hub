@@ -124,12 +124,30 @@ export default {
 
         if (!user?.id) throw new Error("Supabase did not return a user ID.");
 
+        const { data: existingMembership, error: membershipError } = await ctx.supabaseAdmin
+          .from("admin_users")
+          .select("user_id, role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (membershipError) throw membershipError;
+
+        if (existingMembership) {
+          return Response.json({
+            ok: true,
+            invited,
+            alreadyAuthorized: true,
+            userId: user.id,
+            email,
+            role: existingMembership.role,
+          });
+        }
+
         const { error: allowError } = await ctx.supabaseAdmin
           .from("admin_users")
-          .upsert({ user_id: user.id, role: "admin" }, { onConflict: "user_id" });
+          .insert({ user_id: user.id, role: "admin" });
         if (allowError) throw allowError;
 
-        return Response.json({ ok: true, invited, userId: user.id, email });
+        return Response.json({ ok: true, invited, alreadyAuthorized: false, userId: user.id, email, role: "admin" });
       }
 
       if (body.action === "set-role") {
@@ -137,6 +155,10 @@ export default {
         const role = body.role;
         if (!userId || (role !== "owner" && role !== "admin")) {
           return jsonError("A valid administrator and role are required.");
+        }
+
+        if (userId === owner.callerId && role !== "owner") {
+          return jsonError("You cannot demote your own Owner account from this page.", 409);
         }
 
         if (role === "admin") await ensureAnotherOwner(ctx, userId);
