@@ -1110,3 +1110,24 @@ h1 {
     flex: 1 0 auto;
   }
 }
+
+
+.admin-backend-note.live {
+  background: #eef3e1;
+  border-color: rgba(40, 54, 24, 0.16);
+  color: #3d4c2d;
+}
+
+.admin-backend-note.live strong {
+  color: #283618;
+}
+
+#announcementId[readonly] {
+  background: #f3f1eb;
+  color: #6b7280;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

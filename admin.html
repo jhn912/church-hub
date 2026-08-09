@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=6.0" />
+  <link rel="stylesheet" href="style.css?v=7.0" />
 </head>
 <body class="admin-body">
   <main class="admin-main">
@@ -69,8 +69,8 @@
 <div class="admin-security-note">
               <span>🔒</span>
               <span>
-                This version does not send or store the email or password.
-                We will connect real secure authentication before anyone uses this login.
+                Secure sign-in is handled by Supabase Auth. Only accounts on the
+                Ministerio Shekinah administrator allow-list can open this portal.
               </span>
             </div>
           </div>
@@ -114,7 +114,7 @@
               <p>Change the service day, time, and an optional special message.</p>
             </div>
             <button class="button button-primary" id="saveServiceButton" type="button">
-              Save Service Draft
+              Save Service
             </button>
           </div>
 
@@ -232,7 +232,7 @@
                   <div class="editor-field">
                     <label>
                       Internal ID
-                      <input type="text" id="announcementId" />
+                      <input type="text" id="announcementId" readonly />
                     </label>
                   </div>
                 </div>
@@ -275,7 +275,7 @@
                     Delete
                   </button>
                   <button class="button button-primary" id="saveAnnouncementButton" type="button">
-                    Save Announcement Draft
+                    Save Announcement
                   </button>
                 </div>
 
@@ -425,17 +425,17 @@
           </div>
         </section>
 
-        <div class="admin-backend-note">
-          <strong>Backend status:</strong>
-          These editors are ready. Until Supabase is connected, Save stores drafts only on this device.
-          After the database is connected, the same controls will update the live website.
+        <div class="admin-backend-note live">
+          <strong>Live backend connected.</strong>
+          Service and announcement changes publish immediately when saved.
+          Newsletter drafts remain private until you press Publish Newsletter.
         </div>
       </section>
     </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=6.1"></script>
-  <script src="admin.js?v=6.0"></script>
+  <script src="supabase-config.js?v=7.0"></script>
+  <script src="admin.js?v=7.0"></script>
 </body>
 </html>

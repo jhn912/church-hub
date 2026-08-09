@@ -25,7 +25,6 @@ const translations = {
     "church_updates": "Church updates",
     "announcements": "Announcements",
     "loading_announcements": "Loading announcements…",
-    "announcement_note": "Announcements are loaded from announcements.json so they can be updated without changing this page.",
     "come_worship": "Come worship with us",
     "visit_ministerio": "Visit Ministerio Shekinah",
     "get_directions": "Get Directions",
@@ -65,7 +64,6 @@ const translations = {
     "church_updates": "Actualizaciones de la iglesia",
     "announcements": "Anuncios",
     "loading_announcements": "Cargando anuncios…",
-    "announcement_note": "Los anuncios se cargan desde announcements.json para que puedan actualizarse sin cambiar esta página.",
     "come_worship": "Ven a adorar con nosotros",
     "visit_ministerio": "Visita Ministerio Shekinah",
     "get_directions": "Cómo Llegar",
@@ -82,6 +80,25 @@ const translations = {
 };
 
 let currentLanguage = localStorage.getItem("ministerioLanguage") || "en";
+let publicSupabase = null;
+
+function supabaseConfigReady() {
+  const cfg = window.SHEKINAH_SUPABASE;
+  return Boolean(
+    window.supabase &&
+    cfg?.url &&
+    cfg?.publishableKey &&
+    !cfg.url.includes("PASTE_") &&
+    !cfg.publishableKey.includes("PASTE_")
+  );
+}
+
+if (supabaseConfigReady()) {
+  publicSupabase = window.supabase.createClient(
+    window.SHEKINAH_SUPABASE.url,
+    window.SHEKINAH_SUPABASE.publishableKey
+  );
+}
 
 function applyLanguage(language) {
   currentLanguage = language;
@@ -135,141 +152,280 @@ if (year) {
   year.textContent = new Date().getFullYear();
 }
 
+// ------------------------------------------------------------
+// Service settings: Supabase first, service.json fallback
+// ------------------------------------------------------------
+async function loadServiceSettings() {
+  if (document.body.dataset.page !== "home") return;
+
+  let service = null;
+
+  if (publicSupabase) {
+    const { data, error } = await publicSupabase
+      .from("service_settings")
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (!error && data) service = data;
+    if (error) console.error("Supabase service read failed:", error);
+  }
+
+  if (!service) {
+    try {
+      const response = await fetch("service.json", { cache: "no-store" });
+      service = await response.json();
+    } catch (error) {
+      console.error("Unable to load service settings:", error);
+      return;
+    }
+  }
+
+  renderServiceSettings(service);
+}
+
+function renderServiceSettings(service) {
+  const isSpanish = currentLanguage === "es";
+  const serviceLabel =
+    service[isSpanish ? "service_label_es" : "service_label_en"] ||
+    (isSpanish ? "Servicio Dominical" : "Sunday Service");
+  const day =
+    service[isSpanish ? "day_es" : "day_en"] ||
+    (isSpanish ? "Domingo" : "Sunday");
+  const specialMessage =
+    service[isSpanish ? "special_message_es" : "special_message_en"];
+
+  const displayTime = service.time_display || "3:00 PM";
+
+  const heroLabel = document.getElementById("heroServiceLabel");
+  const heroTime = document.getElementById("heroServiceTime");
+  const dayLabel = document.getElementById("serviceDayLabel");
+  const sectionLabel = document.getElementById("serviceSectionLabel");
+  const sectionTime = document.getElementById("serviceSectionTime");
+  const visitDay = document.getElementById("visitServiceDay");
+  const visitTime = document.getElementById("visitServiceTime");
+  const message = document.getElementById("specialServiceMessage");
+
+  if (heroLabel) heroLabel.textContent = serviceLabel;
+  if (heroTime) heroTime.textContent = displayTime;
+  if (dayLabel) {
+    dayLabel.textContent = isSpanish
+      ? `Todos los ${day.toLowerCase()}s`
+      : `Every ${day}`;
+  }
+  if (sectionLabel) sectionLabel.textContent = serviceLabel;
+  if (sectionTime) sectionTime.textContent = displayTime;
+  if (visitDay) visitDay.textContent = day;
+  if (visitTime) visitTime.textContent = displayTime;
+
+  if (message) {
+    message.textContent =
+      specialMessage ||
+      (isSpanish
+        ? "Esperamos darte la bienvenida."
+        : "We look forward to welcoming you.");
+  }
+}
+
+// ------------------------------------------------------------
+// Announcements: Supabase first, announcements.json fallback
+// Explicit active=true filter prevents hidden admin rows from
+// appearing even when the visitor is signed in as an admin.
+// ------------------------------------------------------------
 async function loadAnnouncements() {
   const list = document.getElementById("announcementList");
   if (!list) return;
 
   try {
-    const response = await fetch("announcements.json", { cache: "no-store" });
-    const announcements = await response.json();
+    let announcements = null;
 
-    list.innerHTML = announcements
-      .filter((announcement) => announcement.active !== false)
-      .map((announcement) => {
-        const title = announcement[`title_${currentLanguage}`] || announcement.title_en;
-        const description = announcement[`description_${currentLanguage}`] || announcement.description_en;
-        const tag = announcement[`tag_${currentLanguage}`] || announcement.tag_en;
+    if (publicSupabase) {
+      const { data, error } = await publicSupabase
+        .from("announcements")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
 
-        return `
-          <article class="announcement-card">
-            <span class="tag">${escapeHtml(tag)}</span>
-            <h3>${escapeHtml(title)}</h3>
-            <p>${escapeHtml(description)}</p>
-          </article>
-        `;
-      })
-      .join("");
+      if (!error) announcements = data;
+      if (error) console.error("Supabase announcements read failed:", error);
+    }
+
+    if (!announcements) {
+      const response = await fetch("announcements.json", { cache: "no-store" });
+      announcements = await response.json();
+      announcements = announcements.filter((item) => item.active !== false);
+    }
+
+    renderAnnouncements(announcements);
   } catch (error) {
-    list.innerHTML = `<article class="announcement-card"><p>${translations[currentLanguage].announcement_error}</p></article>`;
+    list.innerHTML =
+      `<article class="announcement-card"><p>${translations[currentLanguage].announcement_error}</p></article>`;
   }
 }
 
+function renderAnnouncements(announcements) {
+  const list = document.getElementById("announcementList");
+  if (!list) return;
+
+  list.innerHTML = announcements
+    .map((announcement) => {
+      const title =
+        announcement[`title_${currentLanguage}`] || announcement.title_en;
+      const description =
+        announcement[`description_${currentLanguage}`] ||
+        announcement.description_en;
+      const tag =
+        announcement[`tag_${currentLanguage}`] || announcement.tag_en;
+
+      return `
+        <article class="announcement-card">
+          <span class="tag">${escapeHtml(tag)}</span>
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(description)}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+// ------------------------------------------------------------
+// Newsletter: published Supabase issues first.
+// Only rows with published_at set by the admin Publish button
+// are shown. Static JSON remains as a fallback until the first
+// real newsletter is published through the portal.
+// ------------------------------------------------------------
 async function loadNewsletters() {
   const latestContainer = document.getElementById("latestNewsletter");
   const archiveContainer = document.getElementById("newsletterArchive");
   if (!latestContainer || !archiveContainer) return;
 
   try {
-    const response = await fetch("newsletters.json", { cache: "no-store" });
-    const issues = await response.json();
+    let issues = null;
 
-    if (!issues.length) throw new Error("No newsletter issues found.");
+    if (publicSupabase) {
+      const { data, error } = await publicSupabase
+        .from("newsletters")
+        .select("*")
+        .eq("status", "published")
+        .not("published_at", "is", null)
+        .order("issue_date", { ascending: false });
+
+      if (!error && data?.length) {
+        issues = data.map(databaseNewsletterToDisplayIssue);
+      }
+
+      if (error) console.error("Supabase newsletter read failed:", error);
+    }
+
+    if (!issues) {
+      const response = await fetch("newsletters.json", { cache: "no-store" });
+      issues = await response.json();
+    }
 
     const params = new URLSearchParams(window.location.search);
     const requestedId = params.get("issue");
-    const selectedIssue = issues.find((issue) => issue.id === requestedId) || issues[0];
+    const selectedIssue =
+      issues.find((issue) => issue.id === requestedId) || issues[0];
+
+    if (!selectedIssue) throw new Error("No newsletter issues found.");
 
     renderNewsletter(selectedIssue, latestContainer);
 
-    archiveContainer.innerHTML = issues
-      .filter((issue) => issue.id !== selectedIssue.id)
-      .map((issue) => {
-        const title = issue[`title_${currentLanguage}`] || issue.title_en;
-        const date = issue[`date_${currentLanguage}`] || issue.date_en;
+    archiveContainer.innerHTML =
+      issues
+        .filter((issue) => issue.id !== selectedIssue.id)
+        .map((issue) => {
+          const title =
+            issue[`title_${currentLanguage}`] || issue.title_en;
+          const date =
+            issue[`date_${currentLanguage}`] || issue.date_en;
 
-        return `
-          <a class="archive-item" href="newsletter.html?issue=${encodeURIComponent(issue.id)}">
-            <strong>${escapeHtml(title)}</strong>
-            <span>${escapeHtml(date)}</span>
-          </a>
-        `;
-      })
-      .join("") || `<p>—</p>`;
+          return `
+            <a class="archive-item" href="newsletter.html?issue=${encodeURIComponent(issue.id)}">
+              <strong>${escapeHtml(title)}</strong>
+              <span>${escapeHtml(date)}</span>
+            </a>
+          `;
+        })
+        .join("") || `<p>—</p>`;
   } catch (error) {
-    latestContainer.innerHTML = `<p>${translations[currentLanguage].newsletter_error}</p>`;
+    latestContainer.innerHTML =
+      `<p>${translations[currentLanguage].newsletter_error}</p>`;
     archiveContainer.innerHTML = "";
   }
 }
 
+function databaseNewsletterToDisplayIssue(row) {
+  const date = new Date(`${row.issue_date}T12:00:00`);
+
+  const dateEn = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(date);
+
+  const dateEs = new Intl.DateTimeFormat("es-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(date);
+
+  return {
+    id: row.id,
+    date_en: dateEn,
+    date_es: dateEs,
+    title_en: row.title_en,
+    title_es: row.title_es,
+    sections: [
+      {
+        heading_en: "Sunday Gathering",
+        heading_es: "Reunión del Domingo",
+        body_en: row.gathering_en || "",
+        body_es: row.gathering_es || ""
+      },
+      {
+        heading_en: "Weekly Scripture",
+        heading_es: "Escritura de la Semana",
+        body_en: row.scripture_en || "",
+        body_es: row.scripture_es || ""
+      },
+      {
+        heading_en: "Community Update",
+        heading_es: "Actualización de la Comunidad",
+        body_en: row.community_en || "",
+        body_es: row.community_es || ""
+      }
+    ]
+  };
+}
+
 function renderNewsletter(issue, container) {
-  const title = issue[`title_${currentLanguage}`] || issue.title_en;
-  const date = issue[`date_${currentLanguage}`] || issue.date_en;
+  const title =
+    issue[`title_${currentLanguage}`] || issue.title_en;
+  const date =
+    issue[`date_${currentLanguage}`] || issue.date_en;
   const sections = issue.sections || [];
 
   container.innerHTML = `
     <span class="tag">${translations[currentLanguage].latest_issue}</span>
     <h2>${escapeHtml(title)}</h2>
     <p class="issue-date">${escapeHtml(date)}</p>
-    ${sections.map((section) => {
-      const heading = section[`heading_${currentLanguage}`] || section.heading_en;
-      const body = section[`body_${currentLanguage}`] || section.body_en;
-      return `
-        <section class="newsletter-section">
-          <h3>${escapeHtml(heading)}</h3>
-          <p>${escapeHtml(body)}</p>
-        </section>
-      `;
-    }).join("")}
+    ${sections
+      .map((section) => {
+        const heading =
+          section[`heading_${currentLanguage}`] || section.heading_en;
+        const body =
+          section[`body_${currentLanguage}`] || section.body_en;
+
+        return `
+          <section class="newsletter-section">
+            <h3>${escapeHtml(heading)}</h3>
+            <p>${escapeHtml(body)}</p>
+          </section>
+        `;
+      })
+      .join("")}
   `;
-}
-
-
-async function loadServiceSettings() {
-  if (document.body.dataset.page !== "home") return;
-
-  try {
-    const response = await fetch("service.json", { cache: "no-store" });
-    const service = await response.json();
-
-    const isSpanish = currentLanguage === "es";
-    const serviceLabel =
-      service[isSpanish ? "service_label_es" : "service_label_en"] ||
-      (isSpanish ? "Servicio Dominical" : "Sunday Service");
-    const day =
-      service[isSpanish ? "day_es" : "day_en"] ||
-      (isSpanish ? "Domingo" : "Sunday");
-    const specialMessage =
-      service[isSpanish ? "special_message_es" : "special_message_en"];
-
-    const displayTime = service.time_display || "3:00 PM";
-
-    const heroLabel = document.getElementById("heroServiceLabel");
-    const heroTime = document.getElementById("heroServiceTime");
-    const dayLabel = document.getElementById("serviceDayLabel");
-    const sectionLabel = document.getElementById("serviceSectionLabel");
-    const sectionTime = document.getElementById("serviceSectionTime");
-    const visitDay = document.getElementById("visitServiceDay");
-    const visitTime = document.getElementById("visitServiceTime");
-    const message = document.getElementById("specialServiceMessage");
-
-    if (heroLabel) heroLabel.textContent = serviceLabel;
-    if (heroTime) heroTime.textContent = displayTime;
-    if (dayLabel) dayLabel.textContent = isSpanish ? `Todos los ${day.toLowerCase()}s` : `Every ${day}`;
-    if (sectionLabel) sectionLabel.textContent = serviceLabel;
-    if (sectionTime) sectionTime.textContent = displayTime;
-    if (visitDay) visitDay.textContent = day;
-    if (visitTime) visitTime.textContent = displayTime;
-
-    if (message) {
-      message.textContent =
-        specialMessage ||
-        (isSpanish
-          ? "Esperamos darte la bienvenida."
-          : "We look forward to welcoming you.");
-    }
-  } catch (error) {
-    console.error("Unable to load service settings:", error);
-  }
 }
 
 function escapeHtml(value = "") {

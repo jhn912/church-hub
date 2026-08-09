@@ -2,7 +2,21 @@
 
 A mobile-first bilingual church website for Ministerio Shekinah in Los Angeles.
 
-## Current version: 0.6.1
+## Current version: 0.7
+
+### New in v0.7 — Live publishing
+
+The admin portal is now wired directly to Supabase:
+
+- Service changes save directly to `service_settings` and appear on the public homepage.
+- Announcements can be added, edited, hidden, or deleted live.
+- Newsletter drafts are stored privately in Supabase.
+- `Publish Newsletter` changes the newsletter status to published and sets `published_at`.
+- The public newsletter page only shows explicitly published issues.
+- Public pages now read Supabase first, with the old JSON files retained as fallback content.
+- The stale “Supabase is not connected” admin messages have been removed.
+
+Security remains enforced by Supabase Auth, the `admin_users` allow-list, Postgres grants, and Row Level Security.
 
 ### v0.6.1
 
