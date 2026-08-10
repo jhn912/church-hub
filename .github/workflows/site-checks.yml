@@ -58,7 +58,7 @@ jobs:
             -not -path './.git/*' \
             -not -path './node_modules/*' -print0)
 
-      - name: Guard against committed Supabase secret keys
+      - name: Guard against committed secret credentials
         shell: bash
         run: |
           set -euo pipefail
@@ -68,8 +68,8 @@ jobs:
             --exclude='*.md' \
             --exclude='*.sql' \
             --exclude='site-checks.yml' \
-            '(sb_secret_|service_role[^[:alnum:]_]*[:=][[:space:]]*["'"''][A-Za-z0-9._-]{20,})' .; then
-            echo "Potential Supabase secret credential committed to the repository."
+            '(sb_secret_|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,})' .; then
+            echo "Potential secret credential committed to the repository."
             exit 1
           fi
 
@@ -79,3 +79,7 @@ jobs:
           set -euo pipefail
           grep -q 'publishableKey' supabase-config.js
           grep -q 'sb_publishable_' supabase-config.js
+          if grep -qE '(sb_secret_|service_role)' supabase-config.js; then
+            echo "supabase-config.js must contain only browser-safe Supabase credentials."
+            exit 1
+          fi
