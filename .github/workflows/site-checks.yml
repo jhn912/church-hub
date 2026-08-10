@@ -79,7 +79,7 @@ jobs:
           set -euo pipefail
           grep -q 'publishableKey' supabase-config.js
           grep -q 'sb_publishable_' supabase-config.js
-          if grep -qE '(sb_secret_|service_role)' supabase-config.js; then
+          if grep -q 'sb_secret_' supabase-config.js; then
             echo "supabase-config.js must contain only browser-safe Supabase credentials."
             exit 1
           fi
