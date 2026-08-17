@@ -21,3 +21,18 @@ if (/\/admin(?:\.html)?$/.test(window.location.pathname)) {
     document.head.appendChild(script);
   });
 }
+
+/*
+  Newsletter optional-section support is loaded after the page's primary
+  script has initialized. This keeps the existing newsletter system intact
+  while adding optional Ministry Spotlight, celebrations, important notice,
+  and custom sections.
+*/
+if (/\/(?:admin|newsletter)(?:\.html)?$/.test(window.location.pathname)) {
+  window.addEventListener("DOMContentLoaded", () => {
+    const script = document.createElement("script");
+    script.src = "newsletter-extensions.js?v=1.0";
+    script.async = false;
+    document.body.appendChild(script);
+  });
+}
