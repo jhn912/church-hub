@@ -1,0 +1,66 @@
+name: Rename church
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Replace the old church name everywhere in tracked text files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          old = "Ministerio" + " " + "Shekinah"
+          new = "Ministerio Cristiano Shekinah"
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z"]
+          ).decode("utf-8").split("\0")
+
+          changed = []
+          for relative in tracked:
+              if not relative:
+                  continue
+              path = Path(relative)
+              try:
+                  data = path.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              if old not in data:
+                  continue
+              path.write_text(data.replace(old, new), encoding="utf-8")
+              changed.append(relative)
+
+          print("Updated files:")
+          for item in changed:
+              print(f"- {item}")
+          PY
+
+      - name: Commit rename
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No old church-name references remain."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Rename church to Ministerio Cristiano Shekinah"
+          git push origin HEAD:main
