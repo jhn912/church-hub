@@ -1,4 +1,4 @@
--- Owner/admin role model for Ministerio Shekinah.
+-- Owner/admin role model for Ministerio Cristiano Shekinah.
 -- Safe to apply to the existing admin_users allow-list.
 
 begin;

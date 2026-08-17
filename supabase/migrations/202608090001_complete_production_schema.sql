@@ -1,4 +1,4 @@
--- Canonical baseline schema for Ministerio Shekinah Church Hub.
+-- Canonical baseline schema for Ministerio Cristiano Shekinah Church Hub.
 -- Designed to preserve existing production rows while making fresh installs reproducible.
 
 begin;

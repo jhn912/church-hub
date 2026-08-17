@@ -1,4 +1,4 @@
-/* Owner-only administrator management for Ministerio Shekinah. */
+/* Owner-only administrator management for Ministerio Cristiano Shekinah. */
 (function () {
   const FUNCTION_NAME = "admin-users";
   let ownerClient = null;
@@ -62,7 +62,7 @@
         <div>
           <p class="eyebrow">Owner controls</p>
           <h2>Administrators</h2>
-          <p>Manage who can sign in to the Ministerio Shekinah admin portal.</p>
+          <p>Manage who can sign in to the Ministerio Cristiano Shekinah admin portal.</p>
         </div>
         <button class="button admin-button-secondary" id="refreshAdministratorsButton" type="button">Refresh</button>
       </div>

@@ -1,6 +1,6 @@
-# Ministerio Shekinah Church Hub
+# Ministerio Cristiano Shekinah Church Hub
 
-A mobile-first bilingual church website and lightweight CMS for Ministerio Shekinah in Los Angeles.
+A mobile-first bilingual church website and lightweight CMS for Ministerio Cristiano Shekinah in Los Angeles.
 
 ## Live site
 
@@ -122,7 +122,7 @@ See `ADMINISTRATORS_SETUP.md` for the production administrator-management runboo
 
 ## Church information
 
-**Ministerio Shekinah**  
+**Ministerio Cristiano Shekinah**  
 2149 W Washington Blvd  
 Los Angeles, CA 90018
 

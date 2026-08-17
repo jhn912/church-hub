@@ -1,5 +1,5 @@
 /*
-  Supabase browser configuration for Ministerio Shekinah.
+  Supabase browser configuration for Ministerio Cristiano Shekinah.
 
   This file contains only the public Project URL and publishable key.
   Never place a Supabase secret key or service_role key in this file.

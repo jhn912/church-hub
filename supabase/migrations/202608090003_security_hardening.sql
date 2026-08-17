@@ -1,4 +1,4 @@
--- Security hardening for the live Ministerio Shekinah Supabase schema.
+-- Security hardening for the live Ministerio Cristiano Shekinah Supabase schema.
 -- This migration is scoped to the four application tables and preserves existing rows.
 
 begin;

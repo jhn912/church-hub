@@ -8,7 +8,7 @@ const translations = {
     nav_announcements: "Announcements",
     nav_visit: "Visit",
     hero_title: "A place to worship, grow, and belong.",
-    hero_copy: "Stay connected with Ministerio Shekinah through service information, church announcements, and our community newsletter.",
+    hero_copy: "Stay connected with Ministerio Cristiano Shekinah through service information, church announcements, and our community newsletter.",
     plan_visit: "Plan a Visit",
     read_newsletter: "Read Newsletter",
     sunday_service: "Sunday Service",
@@ -20,7 +20,7 @@ const translations = {
     church_newsletter: "Church Newsletter",
     newsletter_preview_copy: "Read the latest church update and browse previous newsletter issues.",
     latest_issue: "Latest Issue",
-    this_week_at: "This Week at Ministerio Shekinah",
+    this_week_at: "This Week at Ministerio Cristiano Shekinah",
     newsletter_preview_details: "Sunday service, scripture, announcements, and community updates in one place.",
     open_newsletter: "Open Newsletter →",
     church_updates: "Church updates",
@@ -28,12 +28,12 @@ const translations = {
     loading_announcements: "Loading announcements…",
     no_announcements: "No announcements right now.",
     come_worship: "Come worship with us",
-    visit_ministerio: "Visit Ministerio Shekinah",
+    visit_ministerio: "Visit Ministerio Cristiano Shekinah",
     sunday: "Sunday",
     service_begins: "Service begins at",
     welcome_message: "We look forward to welcoming you.",
     service_error: "Service information is temporarily unavailable.",
-    newsletter_page_intro: "Read the latest issue and browse previous updates from Ministerio Shekinah.",
+    newsletter_page_intro: "Read the latest issue and browse previous updates from Ministerio Cristiano Shekinah.",
     previous_issues: "Previous Issues",
     loading_newsletter: "Loading newsletter…",
     loading_archive: "Loading archive…",
@@ -47,7 +47,7 @@ const translations = {
     nav_announcements: "Anuncios",
     nav_visit: "Visítanos",
     hero_title: "Un lugar para adorar, crecer y pertenecer.",
-    hero_copy: "Mantente conectado con Ministerio Shekinah por medio de la información de servicios, anuncios de la iglesia y nuestro boletín comunitario.",
+    hero_copy: "Mantente conectado con Ministerio Cristiano Shekinah por medio de la información de servicios, anuncios de la iglesia y nuestro boletín comunitario.",
     plan_visit: "Planifica tu Visita",
     read_newsletter: "Leer el Boletín",
     sunday_service: "Servicio Dominical",
@@ -59,7 +59,7 @@ const translations = {
     church_newsletter: "Boletín de la Iglesia",
     newsletter_preview_copy: "Lee la actualización más reciente de la iglesia y consulta boletines anteriores.",
     latest_issue: "Boletín más reciente",
-    this_week_at: "Esta Semana en Ministerio Shekinah",
+    this_week_at: "Esta Semana en Ministerio Cristiano Shekinah",
     newsletter_preview_details: "Servicio dominical, escritura, anuncios y actualizaciones de la comunidad en un solo lugar.",
     open_newsletter: "Abrir Boletín →",
     church_updates: "Actualizaciones de la iglesia",
@@ -67,12 +67,12 @@ const translations = {
     loading_announcements: "Cargando anuncios…",
     no_announcements: "No hay anuncios en este momento.",
     come_worship: "Ven a adorar con nosotros",
-    visit_ministerio: "Visita Ministerio Shekinah",
+    visit_ministerio: "Visita Ministerio Cristiano Shekinah",
     sunday: "Domingo",
     service_begins: "El servicio comienza a las",
     welcome_message: "Esperamos darte la bienvenida.",
     service_error: "La información del servicio no está disponible temporalmente.",
-    newsletter_page_intro: "Lee el boletín más reciente y consulta actualizaciones anteriores de Ministerio Shekinah.",
+    newsletter_page_intro: "Lee el boletín más reciente y consulta actualizaciones anteriores de Ministerio Cristiano Shekinah.",
     previous_issues: "Boletines Anteriores",
     loading_newsletter: "Cargando boletín…",
     loading_archive: "Cargando archivo…",
@@ -377,7 +377,7 @@ function renderNewsletterPage(issues) {
 
   if (!selectedIssue) {
     latestContainer.innerHTML =
-      `<div class="newsletter-empty-public"><h2>No published newsletter yet</h2><p>Check back for the next Ministerio Shekinah update.</p></div>`;
+      `<div class="newsletter-empty-public"><h2>No published newsletter yet</h2><p>Check back for the next Ministerio Cristiano Shekinah update.</p></div>`;
     archiveContainer.innerHTML = `<p>—</p>`;
     return;
   }

@@ -1,4 +1,4 @@
--- Ministerio Shekinah admin authorization setup
+-- Ministerio Cristiano Shekinah admin authorization setup
 -- Run this in the Supabase SQL Editor AFTER creating the admin user in Authentication.
 
 create table if not exists public.admin_users (

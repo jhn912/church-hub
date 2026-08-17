@@ -788,8 +788,8 @@ document.getElementById("newNewsletterButton").addEventListener("click", () => {
   document.getElementById("issueDateHelper").textContent =
     "Choose the issue date. It becomes the permanent ID after the first save.";
   document.getElementById("issueStatus").value = "draft";
-  document.getElementById("titleEn").value = "This Week at Ministerio Shekinah";
-  document.getElementById("titleEs").value = "Esta Semana en Ministerio Shekinah";
+  document.getElementById("titleEn").value = "This Week at Ministerio Cristiano Shekinah";
+  document.getElementById("titleEs").value = "Esta Semana en Ministerio Cristiano Shekinah";
   document.getElementById("gatheringEn").value =
     "Join us this Sunday at 3:00 PM for worship and fellowship.";
   document.getElementById("gatheringEs").value =
@@ -885,7 +885,7 @@ function updateNewsletterPreview() {
 
   document.getElementById("previewTitle").textContent =
     (isSpanish ? data.title_es : data.title_en) ||
-    (isSpanish ? "Boletín de Ministerio Shekinah" : "Ministerio Shekinah Newsletter");
+    (isSpanish ? "Boletín de Ministerio Cristiano Shekinah" : "Ministerio Cristiano Shekinah Newsletter");
 
   document.getElementById("previewGatheringHeading").textContent =
     isSpanish ? "Reunión del Domingo" : "Sunday Gathering";
