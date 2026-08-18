@@ -115,7 +115,7 @@ export default {
 
         if (!user) {
           const { data, error } = await ctx.supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            redirectTo: "https://mcshekinah.org/admin.html",
+            redirectTo: "https://mcshekinah.org/admin",
           });
           if (error) throw error;
           user = data.user;
