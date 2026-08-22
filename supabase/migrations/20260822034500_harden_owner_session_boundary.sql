@@ -204,7 +204,32 @@ begin
     raise exception 'invalid_admin_action' using errcode = '22023';
   end if;
 
-  -- Idempotent replay: the same actor/action/request ID returns its first result.
+  -- Establish a linearization point for privileged authority. FOR SHARE locks
+  -- prevent concurrent session deletion or Owner-role update/removal from racing
+  -- past this check. If revocation/demotion wins first, these checks fail; if this
+  -- transaction locks first, the already-authorized mutation completes before
+  -- the revocation/demotion can commit.
+  perform 1
+  from auth.sessions as s
+  where s.id = p_actor_session_id
+    and s.user_id = p_actor_user_id
+  for share;
+
+  if not found then
+    raise exception 'owner_session_not_active' using errcode = '42501';
+  end if;
+
+  perform 1
+  from public.admin_users as a
+  where a.user_id = p_actor_user_id
+    and a.role = 'owner'
+  for share;
+
+  if not found then
+    raise exception 'owner_session_not_active' using errcode = '42501';
+  end if;
+
+  -- Idempotent replay: the same active actor/action/request ID returns its first result.
   select a.result
     into v_cached
   from private.admin_action_audit as a
@@ -223,19 +248,6 @@ begin
     where a.request_id = p_request_id
   ) then
     raise exception 'request_id_conflict' using errcode = '23505';
-  end if;
-
-  -- Recheck session liveness and Owner membership immediately before mutation.
-  if not exists (
-    select 1
-    from auth.sessions as s
-    join public.admin_users as a
-      on a.user_id = s.user_id
-    where s.id = p_actor_session_id
-      and s.user_id = p_actor_user_id
-      and a.role = 'owner'
-  ) then
-    raise exception 'owner_session_not_active' using errcode = '42501';
   end if;
 
   if p_action = 'invite' then
