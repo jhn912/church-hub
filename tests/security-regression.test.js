@@ -34,9 +34,10 @@ test("administrator listing never enumerates the Auth directory", () => {
   assert.match(edge, /admin_find_auth_user_by_email/);
 });
 
-test("owner mutations recheck active auth.sessions state and persist an audit event", () => {
+test("owner mutations lock active session and Owner state before mutation", () => {
   const migration = read("supabase/migrations/20260822034500_harden_owner_session_boundary.sql");
-  assert.match(migration, /from auth\.sessions as s/);
+  assert.match(migration, /from auth\.sessions as s[\s\S]*for share;/i);
+  assert.match(migration, /from public\.admin_users as a[\s\S]*a\.role = 'owner'[\s\S]*for share;/i);
   assert.match(migration, /private\.admin_action_audit/);
   assert.match(migration, /admin_apply_membership_change/);
   assert.match(migration, /actor_session_id uuid not null/);
