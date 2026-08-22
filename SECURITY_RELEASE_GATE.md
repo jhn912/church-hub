@@ -40,7 +40,8 @@ These cannot be enforced merely by committing source files:
 
 - Protect `main` with a GitHub ruleset/branch protection: pull requests, required checks, CODEOWNER review, no force-push/deletion, and tightly restricted bypass.
 - Disable public Supabase Auth signup because the website has no public registration flow.
-- Enable leaked-password protection and review password policy.
+- **Leaked-password protection is currently unavailable on this project because the Ministerio Shekinah Supabase organization is on the Free plan. Supabase currently makes this control available only on Pro and above. If the project is upgraded, enable it immediately in Auth settings and rerun the security advisor. Until then, treat this as a plan-gated residual risk rather than a deploy blocker that can be fixed in source control.**
+- Review the strongest password-length/character policy available on the current plan.
 - Establish and test an Owner recovery path before mandatory MFA enforcement.
 - Enroll/test MFA in staging, then enable `ADMIN_REQUIRE_AAL2=true` only after recovery and direct AAL1-enrollment behavior are verified. The code intentionally does **not** force AAL2 today to avoid locking out the sole Owner.
 - Define and test a server-verifiable recent-authentication rule for the highest-risk Owner actions; AAL2 alone is not claimed as recent reauthentication.
