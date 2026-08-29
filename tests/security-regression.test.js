@@ -59,6 +59,52 @@ test("security-definer admin RPCs are not executable by browser roles", () => {
   assert.match(migration, /to service_role/g);
 });
 
+test("CMS changes are recorded in a private durable history table", () => {
+  const migration = read("supabase/migrations/202608290001_harden_cms_content_boundary.sql");
+  assert.match(migration, /create table if not exists private\.cms_change_audit/);
+  assert.match(migration, /alter table private\.cms_change_audit enable row level security/);
+  assert.match(migration, /revoke all on table private\.cms_change_audit from public, anon, authenticated/);
+  assert.match(migration, /actor_user_id uuid/);
+  assert.match(migration, /before_row jsonb/);
+  assert.match(migration, /after_row jsonb/);
+  assert.match(migration, /auth\.uid\(\)/);
+  assert.match(migration, /after insert or update or delete on public\.announcements/);
+  assert.match(migration, /after insert or update or delete on public\.newsletters/);
+});
+
+test("public CMS attribution UUIDs are removed from anonymous table reads", () => {
+  const migration = read("supabase/migrations/202608290001_harden_cms_content_boundary.sql");
+  assert.match(migration, /revoke select on table public\.service_settings from anon/);
+  assert.match(migration, /revoke select on table public\.announcements from anon/);
+  assert.match(migration, /revoke select on table public\.newsletters from anon/);
+
+  const anonGrantBlocks = migration.match(/grant select \([\s\S]*?\) on public\.(?:service_settings|announcements|newsletters) to anon;/g) || [];
+  assert.equal(anonGrantBlocks.length, 3);
+  for (const grant of anonGrantBlocks) {
+    assert.doesNotMatch(grant, /created_by|updated_by|created_at|updated_at/);
+  }
+});
+
+test("browser supplied CMS attribution is neutralized by server-side triggers", () => {
+  const migration = read("supabase/migrations/202608290001_harden_cms_content_boundary.sql");
+  assert.match(migration, /new\.created_by := null/);
+  assert.match(migration, /new\.updated_by := null/);
+  assert.match(migration, /new\.created_at := clock_timestamp\(\)/);
+  assert.match(migration, /new\.updated_at := clock_timestamp\(\)/);
+  assert.match(migration, /new\.created_at := old\.created_at/);
+});
+
+test("CMS content has database-enforced size ceilings", () => {
+  const migration = read("supabase/migrations/202608290001_harden_cms_content_boundary.sql");
+  assert.match(migration, /service_settings_content_bounds/);
+  assert.match(migration, /announcements_content_bounds/);
+  assert.match(migration, /newsletters_content_bounds/);
+  assert.match(migration, /jsonb_array_length\(optional_sections\) <= 12/);
+  assert.match(migration, /octet_length\(optional_sections::text\) <= 65536/);
+  assert.match(migration, /char_length\(description_en\) <= 4000/);
+  assert.match(migration, /char_length\(gathering_en\) <= 12000/);
+});
+
 test("keep-alive workflow cannot write or push to the repository", () => {
   const workflow = read(".github/workflows/supabase-keep-alive.yml");
   assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
