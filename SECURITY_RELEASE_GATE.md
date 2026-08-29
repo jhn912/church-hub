@@ -11,15 +11,21 @@ This branch addresses the hostile reassessment findings that can be safely fixed
 - Streams and cancels request bodies above 16 KiB instead of buffering the entire body before rejecting it.
 - Adds database-backed per-owner action rate limiting.
 - Adds idempotency support through request IDs and an append-only-style private owner-action audit record that survives deletion of the Auth user because it intentionally has no foreign key to `auth.users`.
+- Removes anonymous table-wide CMS reads and grants only the columns used by the public website, so direct REST queries cannot expose legacy attribution/timestamp metadata.
+- Moves CMS attribution/change history into `private.cms_change_audit`, preserving a private baseline before clearing legacy public-table attribution UUIDs.
+- Makes CMS audit timestamps/attribution server-controlled with database triggers, so a tampered browser request cannot forge the durable actor identity.
+- Adds database ceilings for service settings, announcements, newsletter bodies, optional-section count, and optional-section serialized size.
 - Removes direct-main write capability from the scheduled keep-alive workflow.
 - Makes hosted JavaScript syntax checks fail fast and pins `actions/checkout` to an immutable commit.
 - Adds CODEOWNERS coverage for security-sensitive files and source regression checks.
 
 ## Required staging verification before production
 
-1. Apply `supabase/migrations/20260822034500_harden_owner_session_boundary.sql` to a disposable/staging project first.
+1. Reconcile the staging schema/migration history, then apply both new hardening migrations in order:
+   - `supabase/migrations/20260822034500_harden_owner_session_boundary.sql`
+   - `supabase/migrations/202608290001_harden_cms_content_boundary.sql`
 2. Deploy `admin-users` to staging with JWT verification enabled.
-3. Verify this matrix with synthetic accounts/tokens:
+3. Verify the Owner/session matrix with synthetic accounts/tokens:
    - no token -> rejected before handler;
    - malformed/expired/wrong-project token -> rejected;
    - non-admin -> rejected;
@@ -32,7 +38,24 @@ This branch addresses the hostile reassessment findings that can be safely fixed
 5. Seed many unrelated Auth users and verify administrator listing performs no Auth `listUsers()` scan.
 6. Trigger duplicate mutation requests with the same explicit request ID and verify the second call returns the first result without repeating the membership change.
 7. Confirm every successful invite/role/remove mutation creates exactly one row in `private.admin_action_audit` and browser roles cannot read/write that table or call the security-definer RPCs.
-8. Run Supabase security/performance advisors after the migration.
+8. Exercise service, announcement, and newsletter create/update/delete flows and verify:
+   - the public site still reads exactly the intended public columns;
+   - anonymous direct reads of `created_by`, `updated_by`, `created_at`, and `updated_at` are denied;
+   - public-table `created_by`/`updated_by` remain NULL even when a client submits forged UUID values;
+   - `private.cms_change_audit.actor_user_id` records the authenticated writer;
+   - UPDATE history contains old/new snapshots and DELETE history retains the removed row;
+   - over-limit text and optional-section payloads are rejected by database constraints.
+9. Run Supabase security and performance advisors after both migrations.
+10. Run the browser admin workflow against staging: sign in, edit each content type, publish/unpublish, invite an Admin, change a role, remove that Admin, and sign out/in again.
+
+## Current production facts confirmed during this reassessment
+
+- Production RLS is enabled on all four managed application tables.
+- The existing production RLS policies still gate CMS writes on membership in `admin_users`.
+- Production currently has one Owner, so mandatory MFA or risky auth changes must not be enabled without a tested recovery path.
+- The deployed `admin-users` function is still the older version with `verify_jwt = false`; the hardened branch has **not** been deployed yet.
+- Production migration history does not yet contain either of the two hardening migrations above.
+- Current production content is comfortably below the new proposed size ceilings; the limits were chosen with substantial headroom rather than by truncating existing content.
 
 ## External controls still required
 
