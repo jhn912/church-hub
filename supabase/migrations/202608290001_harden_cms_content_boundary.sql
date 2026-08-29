@@ -295,7 +295,9 @@ begin
     v_after
   );
 
-  return coalesce(new, old);
+  -- This function is used only by AFTER triggers; PostgreSQL ignores their
+  -- returned row value. NULL makes the intent explicit and avoids record coercion.
+  return null;
 end;
 $function$;
 
